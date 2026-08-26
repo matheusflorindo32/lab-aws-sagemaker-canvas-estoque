@@ -1,0 +1,2 @@
+autogluon.timeseries>=1.6,<1.7
+pandas>=2.2,<3
