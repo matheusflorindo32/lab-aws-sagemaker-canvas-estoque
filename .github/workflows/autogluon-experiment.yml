@@ -1,0 +1,52 @@
+name: AutoGluon experiment
+
+on:
+  push:
+    branches: [feat/professional-ml-portfolio]
+    paths:
+      - '.github/workflows/autogluon-experiment.yml'
+      - 'requirements-ml.txt'
+      - 'scripts/train_autogluon.py'
+      - 'src/inventory_forecasting/autogluon_runner.py'
+      - 'datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  autogluon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install AutoGluon TimeSeries
+        run: pip install -r requirements-ml.txt
+
+      - name: Train and evaluate AutoGluon
+        run: python scripts/train_autogluon.py --time-limit 180 --presets medium_quality
+
+      - name: Verify AutoGluon artifacts
+        run: |
+          test -s results/autogluon/leaderboard.csv
+          test -s results/autogluon/holdout_predictions.csv
+          test -s results/autogluon/evaluation.txt
+          test -s results/autogluon/feature_importance.csv
+
+      - name: Upload AutoGluon evaluation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: inventory-forecasting-autogluon
+          path: results/autogluon/
+          if-no-files-found: error
+          retention-days: 30
