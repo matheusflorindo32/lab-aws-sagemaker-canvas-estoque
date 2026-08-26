@@ -1,0 +1,72 @@
+name: Python forecasting
+
+on:
+  push:
+    branches: [main, feat/professional-ml-portfolio]
+    paths:
+      - 'src/**'
+      - 'scripts/run_benchmarks.py'
+      - 'tests/**'
+      - 'datasets/**'
+      - '.github/workflows/python-forecasting.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile forecasting code
+        run: python -m py_compile src/inventory_forecasting/*.py scripts/run_benchmarks.py scripts/train_autogluon.py app.py
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Validate source dataset
+        run: python scripts/validate_dataset.py
+
+      - name: Execute real benchmark backtest
+        run: python scripts/run_benchmarks.py
+
+      - name: Verify generated artifacts
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+
+          metrics = Path('results/metrics/benchmark_metrics.csv')
+          predictions = Path('results/predictions/benchmark_holdout_predictions.csv')
+          leaderboard = Path('results/exports/benchmark_leaderboard.csv')
+          for path in (metrics, predictions, leaderboard):
+              if not path.exists() or path.stat().st_size == 0:
+                  raise SystemExit(f'Missing artifact: {path}')
+          with predictions.open(encoding='utf-8', newline='') as handle:
+              rows = list(csv.DictReader(handle))
+          expected = 25 * 7 * 3
+          if len(rows) != expected:
+              raise SystemExit(f'Unexpected prediction row count: {len(rows)} != {expected}')
+          print(f'[OK] {len(rows)} benchmark prediction rows verified.')
+          PY
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: inventory-forecasting-benchmarks
+          path: |
+            results/metrics/benchmark_metrics.csv
+            results/predictions/benchmark_holdout_predictions.csv
+            results/exports/benchmark_leaderboard.csv
+          if-no-files-found: error
+          retention-days: 30
