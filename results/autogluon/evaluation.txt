@@ -1,0 +1,4 @@
+WQL=-0.22349288237753495
+
+# AutoGluon flips loss metrics so higher is better.
+# Interpreted WQL loss magnitude: 0.22349288237753495
