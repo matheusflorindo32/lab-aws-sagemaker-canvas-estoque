@@ -154,6 +154,7 @@ python -m py_compile scripts/*.py
 python -m unittest discover -s tests -v
 python scripts/validate_dataset.py
 python scripts/analyze_dataset.py
+python scripts/scan_secrets.py
 ```
 
 O validador verifica:
@@ -188,6 +189,8 @@ Após o treinamento real, esta seção será atualizada somente com métricas ap
 | Average wQL | **PENDENTE** | aguardando execução real no Canvas |
 
 Nem toda configuração/interface apresenta necessariamente todas essas métricas. Serão registradas apenas as que o Canvas efetivamente fornecer, e nenhuma métrica será interpretada isoladamente.
+
+A definição, limitações e regras de interpretação de cada métrica estão em [`docs/06-avaliacao-modelo.md`](docs/06-avaliacao-modelo.md).
 
 ### Feature importance / impact
 
@@ -302,10 +305,14 @@ SageMaker Canvas e recursos relacionados podem gerar custos. Este projeto não p
 ├── docs/
 │   ├── 03-analise-exploratoria.md
 │   ├── 04-configuracao-sagemaker-canvas.md
+│   ├── 06-avaliacao-modelo.md
 │   ├── 09-limitacoes-e-evolucoes.md
 │   ├── 10-custos-aws.md
 │   └── 12-cleanup-aws.md
 ├── results/
+│   ├── metrics/README.md
+│   ├── predictions/README.md
+│   ├── exports/README.md
 │   └── README.md
 ├── scripts/
 │   ├── analyze_dataset.py
@@ -359,7 +366,7 @@ SageMaker Canvas e recursos relacionados podem gerar custos. Este projeto não p
 - CI de validação;
 - scanner de segredos e CI de segurança;
 - guia de execução do Canvas;
-- documentação de custos e cleanup AWS;
+- documentação de avaliação, custos e cleanup AWS;
 - política de integridade dos resultados.
 
 ### ⏳ Pendente de execução AWS
