@@ -1,0 +1,71 @@
+name: Streamlit smoke test
+
+on:
+  push:
+    branches: [main, feat/professional-ml-portfolio]
+    paths:
+      - 'app.py'
+      - 'requirements-app.txt'
+      - 'src/inventory_forecasting/**'
+      - 'datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv'
+      - '.github/workflows/streamlit-smoke.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  streamlit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install application dependencies
+        run: pip install -r requirements-app.txt
+
+      - name: Start Streamlit
+        run: |
+          streamlit run app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8501 \
+            > /tmp/streamlit.log 2>&1 &
+          echo $! > /tmp/streamlit.pid
+
+      - name: Wait for health endpoint
+        run: |
+          python - <<'PY'
+          import time
+          import urllib.request
+
+          url = 'http://127.0.0.1:8501/_stcore/health'
+          last_error = None
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen(url, timeout=2) as response:
+                      body = response.read().decode('utf-8').strip()
+                      if response.status == 200 and body == 'ok':
+                          print('[OK] Streamlit health endpoint responded successfully.')
+                          raise SystemExit(0)
+              except Exception as exc:
+                  last_error = exc
+              time.sleep(1)
+          print(open('/tmp/streamlit.log', encoding='utf-8').read())
+          raise SystemExit(f'Streamlit did not become healthy: {last_error}')
+          PY
+
+      - name: Stop Streamlit
+        if: always()
+        run: |
+          if [ -f /tmp/streamlit.pid ]; then
+            kill "$(cat /tmp/streamlit.pid)" || true
+          fi
