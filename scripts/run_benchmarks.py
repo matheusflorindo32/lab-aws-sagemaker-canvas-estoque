@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import csv
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from src.inventory_forecasting.benchmark import run_benchmarks
 from src.inventory_forecasting.data import load_dataset
