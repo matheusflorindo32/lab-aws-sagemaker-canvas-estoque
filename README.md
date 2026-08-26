@@ -3,7 +3,8 @@
 [![AWS](https://img.shields.io/badge/AWS-SageMaker%20Canvas-232F3E?logo=amazonaws)](https://aws.amazon.com/sagemaker/canvas/)
 [![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Time%20Series-blue)](#-modelagem)
 [![DIO](https://img.shields.io/badge/DIO-Project%20Lab-6C63FF)](https://www.dio.me/)
-[![Security](https://img.shields.io/badge/Security-AWS%20Secrets%20Protected-success)](SECURITY.md)
+[![Dataset validation](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/dataset-validation.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/dataset-validation.yml)
+[![Security scan](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml)
 
 > Forecasting de estoque por SKU utilizando Machine Learning no-code, séries temporais e Amazon SageMaker Canvas.
 
@@ -40,12 +41,18 @@ Arquivo principal:
 datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
 ```
 
-Características validadas a partir do arquivo:
+Características verificadas pela CI:
 
 - **1.000 registros**;
 - **25 SKUs** (`1000` a `1024`);
-- frequência diária;
+- **40 observações por SKU**;
+- frequência diária regular;
 - período de **2023-12-31 a 2024-02-08**;
+- **0** campos ausentes;
+- **0** duplicatas exatas;
+- **0** chaves `ID_PRODUTO + DATA_EVENTO` duplicadas;
+- **0** pontos diários ausentes;
+- **0** linhas inválidas;
 - preço e indicador promocional disponíveis como variáveis explicativas.
 
 ### Dicionário de dados
@@ -62,6 +69,34 @@ Os datasets originais da DIO permanecem preservados. Consulte [`datasets/README.
 
 ---
 
+## 🔎 Análise exploratória descritiva
+
+A EDA é reproduzível, sem dependências externas:
+
+```bash
+python scripts/analyze_dataset.py
+```
+
+Resultados obtidos no GitHub Actions sobre o dataset selecionado:
+
+| Indicador | Resultado |
+|---|---:|
+| Preço médio | 78,64 |
+| Preço mínimo | 18,31 |
+| Preço máximo | 187,04 |
+| Estoque médio | 55,73 |
+| Estoque mínimo | 1 |
+| Estoque máximo | 100 |
+| Registros promocionais | 20,60% |
+| Estoque médio em promoção | 57,93 |
+| Estoque médio sem promoção | 55,15 |
+
+Top 5 SKUs por volatilidade descritiva do estoque (desvio-padrão populacional): `1003` (32,13), `1009` (32,12), `1018` (31,90), `1024` (31,66) e `1017` (31,55).
+
+Essas estatísticas **não demonstram causalidade** entre preço, promoção e estoque. A análise detalhada está em [`docs/03-analise-exploratoria.md`](docs/03-analise-exploratoria.md).
+
+---
+
 ## 🏗️ Arquitetura do Lab
 
 ```mermaid
@@ -74,17 +109,18 @@ flowchart LR
     F --> G[Insights de estoque]
 ```
 
-### Evolução futura
+### 🚀 Evolução futura
 
 ```mermaid
 flowchart LR
     A[ERP / Vendas / Estoque] --> B[Amazon S3]
-    B --> C[ETL / Feature Engineering]
-    C --> D[SageMaker]
+    B --> C[AWS Glue / Feature Engineering]
+    C --> D[Amazon SageMaker]
     D --> E[Forecast de Demanda]
-    E --> F[Regras de Reposição]
-    F --> G[Dashboard / API / ERP]
-    D --> H[Monitoramento e Retraining]
+    E --> F[Reorder Engine]
+    F --> G[ERP]
+    E --> H[QuickSight / Dashboard]
+    D --> I[Monitoramento e Retraining]
 ```
 
 A segunda arquitetura é apenas uma **evolução futura**, não uma implementação já realizada neste Lab.
@@ -109,28 +145,33 @@ O passo a passo operacional está em [`docs/04-configuracao-sagemaker-canvas.md`
 
 ---
 
-## 🧪 Validação local dos dados
+## 🧪 Validação e testes
 
-Foi incluído um script simples e sem dependências externas para validar o dataset antes do upload no Canvas:
+O projeto utiliza somente a biblioteca padrão do Python para as verificações auxiliares:
 
 ```bash
+python -m py_compile scripts/*.py
+python -m unittest discover -s tests -v
 python scripts/validate_dataset.py
+python scripts/analyze_dataset.py
 ```
 
-Ele verifica:
+O validador verifica:
 
-- existência do arquivo;
-- schema esperado;
-- quantidade de registros;
-- SKUs únicos;
-- intervalo de datas;
-- valores ausentes;
+- existência do arquivo e schema esperado;
+- cardinalidade do baseline;
+- quantidade de SKUs e observações por SKU;
+- intervalo temporal;
+- campos ausentes;
 - duplicatas exatas;
+- duplicidade da chave `SKU + data`;
+- regularidade diária por SKU;
 - tipos básicos;
-- flag promocional;
+- preço negativo;
+- flag promocional fora de `0/1`;
 - estoque negativo.
 
-A mesma verificação é executada por GitHub Actions em pull requests e pushes relevantes.
+Na execução auditada do GitHub Actions, **7 testes unitários passaram**, os scripts compilaram e o dataset baseline foi validado com sucesso.
 
 ---
 
@@ -140,23 +181,24 @@ Após o treinamento real, esta seção será atualizada somente com métricas ap
 
 | Métrica | Resultado | Interpretação |
 |---|---:|---|
-| WAPE | **PENDENTE** | preencher após execução real |
-| MAPE | **PENDENTE** | preencher após execução real |
-| RMSE | **PENDENTE** | preencher após execução real |
-| MASE | **PENDENTE** | preencher após execução real |
-| Average wQL | **PENDENTE** | preencher após execução real |
+| WAPE | **PENDENTE** | aguardando execução real no Canvas |
+| MAPE | **PENDENTE** | aguardando execução real no Canvas |
+| RMSE | **PENDENTE** | aguardando execução real no Canvas |
+| MASE | **PENDENTE** | aguardando execução real no Canvas |
+| Average wQL | **PENDENTE** | aguardando execução real no Canvas |
 
-Nem toda configuração/interface apresenta necessariamente todas essas métricas. Serão registradas apenas as que o Canvas efetivamente fornecer.
+Nem toda configuração/interface apresenta necessariamente todas essas métricas. Serão registradas apenas as que o Canvas efetivamente fornecer, e nenhuma métrica será interpretada isoladamente.
 
-### Feature impact
+### Feature importance / impact
 
-Também será documentada a influência das variáveis disponibilizada pela interface, com atenção especial a:
+Será documentada somente a importância realmente exibida pela interface, com atenção a:
 
 - `PRECO`;
 - `FLAG_PROMOCAO`;
-- comportamento histórico do estoque.
+- comportamento histórico;
+- efeitos temporais/calendário, quando disponibilizados pelo fluxo utilizado.
 
-**Status:** PENDENTE DE EXECUÇÃO NA AWS.
+**Status:** ⏳ PENDENTE DE EXECUÇÃO NA AWS.
 
 ---
 
@@ -164,7 +206,7 @@ Também será documentada a influência das variáveis disponibilizada pela inte
 
 Após o treinamento, serão geradas previsões de estoque por SKU e os resultados serão organizados em [`results/`](results/README.md).
 
-Quando disponíveis na execução utilizada, intervalos/quantis de previsão também poderão ser documentados para demonstrar incerteza do forecast.
+Quando disponíveis na execução utilizada, intervalos/quantis de previsão também poderão ser documentados para representar a incerteza do forecast.
 
 ### Questões de negócio que serão analisadas
 
@@ -174,7 +216,7 @@ Quando disponíveis na execução utilizada, intervalos/quantis de previsão tam
 - preço e promoção ajudam a explicar parte do comportamento observado?
 - quais produtos merecem acompanhamento operacional mais frequente?
 
-Nenhuma conclusão será declarada antes de observar os resultados reais.
+Nenhuma conclusão de modelo será declarada antes de observar os resultados reais.
 
 ---
 
@@ -187,29 +229,30 @@ Se a configuração do Canvas utilizada permitir fornecer valores futuros para c
 3. redução de preço;
 4. aumento de preço.
 
-Essa análise é uma **extensão experimental** e não um requisito obrigatório da DIO.
+Essa análise é uma **extensão experimental** e não um requisito obrigatório da DIO. Nenhuma previsão de cenário será inventada.
 
 ---
 
 ## ⚠️ Limitações
 
-- dataset educacional e pequeno;
+- dataset educacional/sintético;
 - série temporal curta;
+- apenas 25 SKUs;
 - ausência de vendas/demanda explícita;
 - ausência de lead time;
-- ausência de fornecedor;
+- ausência de fornecedores;
 - ausência de safety stock;
-- ausência de custos de ruptura e armazenamento;
-- ausência de variáveis externas mais ricas;
+- ausência de service level;
+- ausência de custos de ruptura;
+- ausência de custos de armazenagem;
+- ausência de fatores externos mais ricos;
 - previsão de estoque não equivale diretamente a previsão de demanda.
 
-Essas limitações são importantes para não extrapolar a validade do experimento.
+Essas limitações são importantes para não extrapolar a validade do experimento. Consulte [`docs/09-limitacoes-e-evolucoes.md`](docs/09-limitacoes-e-evolucoes.md).
 
 ---
 
-## 🔐 Segurança AWS
-
-Este repositório possui uma baseline de segurança específica para evitar exposição de credenciais.
+## 🔐 Segurança AWS e do repositório
 
 Nunca versione:
 
@@ -221,19 +264,24 @@ AWS_SESSION_TOKEN
 .aws/
 *.pem
 *.key
+*.p12
+*.pfx
 ```
 
-Antes de adicionar screenshots, remova Account IDs, credenciais, e-mails, usuários IAM, ARNs sensíveis e dados privados desnecessários.
+O repositório possui um scanner leve em `scripts/scan_secrets.py`, executado por [`.github/workflows/security.yml`](.github/workflows/security.yml) com permissão `contents: read`. Na execução auditada, nenhum padrão de segredo de alto risco foi detectado.
 
-Consulte [`SECURITY.md`](SECURITY.md).
+Antes de adicionar screenshots, remova Account IDs, credenciais, e-mails, usuários IAM, ARNs sensíveis e dados privados desnecessários. O checklist de evidências está em [`assets/screenshots/README.md`](assets/screenshots/README.md).
+
+Consulte também [`SECURITY.md`](SECURITY.md).
 
 ---
 
 ## 💰 Custos e cleanup
 
-SageMaker Canvas e recursos relacionados podem gerar custos. Após o Lab, revise e encerre o que não for mais necessário.
+SageMaker Canvas e recursos relacionados podem gerar custos. Este projeto não publica preços nem custo real sem evidência verificável da conta utilizada.
 
-Checklist completo: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
+- orientação de custos: [`docs/10-custos-aws.md`](docs/10-custos-aws.md);
+- checklist de encerramento: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
 
 > Fechar a aba do navegador não deve ser considerado evidência suficiente de que todos os recursos faturáveis foram encerrados.
 
@@ -244,17 +292,29 @@ Checklist completo: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
 ```text
 .
 ├── .github/workflows/
-│   └── dataset-validation.yml
+│   ├── dataset-validation.yml
+│   └── security.yml
+├── assets/
+│   └── screenshots/README.md
 ├── datasets/
 │   ├── README.md
 │   └── *.csv
 ├── docs/
+│   ├── 03-analise-exploratoria.md
 │   ├── 04-configuracao-sagemaker-canvas.md
+│   ├── 09-limitacoes-e-evolucoes.md
+│   ├── 10-custos-aws.md
 │   └── 12-cleanup-aws.md
 ├── results/
 │   └── README.md
 ├── scripts/
+│   ├── analyze_dataset.py
+│   ├── scan_secrets.py
 │   └── validate_dataset.py
+├── tests/
+│   ├── test_analyze_dataset.py
+│   ├── test_scan_secrets.py
+│   └── test_validate_dataset.py
 ├── .gitignore
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
@@ -271,7 +331,9 @@ Checklist completo: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
 | Fork do repositório | ✅ |
 | Dataset selecionado | ✅ |
 | Dataset documentado | ✅ |
-| Validação local preparada | ✅ |
+| Validação local/CI executada | ✅ |
+| Análise exploratória descritiva | ✅ |
+| Security scan executado | ✅ |
 | Upload no Canvas | ⏳ |
 | Modelo configurado no Canvas | ⏳ |
 | Modelo treinado | ⏳ |
@@ -279,25 +341,35 @@ Checklist completo: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
 | Feature impact analisado | ⏳ |
 | Forecast gerado | ⏳ |
 | Resultados exportados | ⏳ |
-| Insights documentados | ⏳ |
+| Insights finais do modelo | ⏳ |
 | README final pós-execução | ⏳ |
 
 ---
 
 ## 🚦 Status do projeto
 
-### ✅ Implementado
+### ✅ Implementado e verificado
 
 - fork e preservação da baseline DIO;
-- seleção do dataset principal;
-- documentação do schema;
+- seleção e documentação do dataset principal;
+- validação estrutural e temporal do dataset;
+- análise exploratória descritiva reproduzível;
+- testes unitários e compilação Python em CI;
 - arquitetura do Lab;
-- validação local do dataset;
 - CI de validação;
-- baseline de segurança;
+- scanner de segredos e CI de segurança;
 - guia de execução do Canvas;
-- checklist de cleanup AWS;
+- documentação de custos e cleanup AWS;
 - política de integridade dos resultados.
+
+### ⏳ Pendente de execução AWS
+
+- upload do dataset no SageMaker Canvas;
+- configuração e treinamento do modelo;
+- métricas e feature importance/impact;
+- forecast e exportação dos resultados;
+- screenshots reais e sanitizados;
+- interpretação técnica e de negócio pós-modelo.
 
 ### 🧪 Experimental
 
@@ -306,8 +378,8 @@ Checklist completo: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
 ### 🚀 Evolução futura
 
 - previsão explícita de demanda;
-- integração com S3/ETL/ERP;
-- políticas de reorder point e safety stock;
+- integração com S3/Glue/ERP;
+- políticas de reorder point, safety stock e service level;
 - dashboards;
 - MLOps, monitoramento de drift e retraining.
 
@@ -317,7 +389,7 @@ Checklist completo: [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
 
 Projeto desenvolvido como evolução educacional do Lab da **Digital Innovation One**:
 
-- repositório-base: `digitalinnovationone/lab-aws-sagemaker-canvas-estoque`;
+- repositório-base: [`digitalinnovationone/lab-aws-sagemaker-canvas-estoque`](https://github.com/digitalinnovationone/lab-aws-sagemaker-canvas-estoque);
 - plataforma de ML: Amazon SageMaker Canvas.
 
 Os datasets originais foram preservados para manter rastreabilidade com o desafio.
@@ -329,4 +401,4 @@ GitHub: [`@matheusflorindo32`](https://github.com/matheusflorindo32)
 
 ---
 
-> Próxima etapa: executar o treinamento real no Amazon SageMaker Canvas, coletar métricas, screenshots e forecasts, e então concluir a análise técnica e de negócio sem fabricar resultados.
+> **Próxima etapa:** executar o treinamento real no Amazon SageMaker Canvas, coletar métricas, screenshots e forecasts, e então concluir a análise técnica e de negócio sem fabricar resultados.
