@@ -3,8 +3,10 @@
 .env.*
 !.env.example
 .aws/
-**/credentials
-**/config
+.aws/credentials
+.aws/config
+**/.aws/credentials
+**/.aws/config
 *.pem
 *.key
 *.p12
