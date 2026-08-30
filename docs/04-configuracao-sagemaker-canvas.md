@@ -1,94 +1,318 @@
-# Configuração do Amazon SageMaker Canvas
+# Guia ultra-didático — Amazon SageMaker Canvas
 
-> Status: **PENDENTE DE EXECUÇÃO NA AWS**. Este documento prepara a etapa prática sem inventar resultados.
+> **STATUS: PENDING REAL EXECUTION**
+>
+> **AWS EXECUTION AUTHORIZED = NO**
+>
+> Este guia prepara a execução prática do desafio DIO sem iniciar recursos faturáveis e sem inventar resultados. Antes de clicar em qualquer build/prediction, consulte [`10-custos-aws.md`](10-custos-aws.md) e obtenha autorização explícita.
 
-## Antes de começar
+## O que a DIO exige
 
-- confirme que está usando a conta AWS correta;
-- consulte [`10-custos-aws.md`](10-custos-aws.md);
-- evite credenciais administrativas quando não forem necessárias;
-- prepare o dataset já validado pelo workflow do projeto.
+O Lab oficial pede: selecionar/upload do dataset, importar no Canvas, configurar entradas/saída, treinar, analisar métricas e características relevantes, prever, exportar e documentar conclusões.
 
-## Configuração do modelo
+## Dataset
 
-Use o dataset:
+Use exatamente:
 
-`datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv`
+```text
+datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
+```
 
-Configuração recomendada para a primeira execução:
+Configuração planejada:
 
-| Parâmetro | Valor |
+| Campo | Valor planejado |
 |---|---|
-| Tipo de problema | Time Series Forecasting |
-| Target | `QUANTIDADE_ESTOQUE` |
-| Item ID | `ID_PRODUTO` |
-| Timestamp | `DATA_EVENTO` |
-| Frequência | Daily |
-| Horizonte inicial | 7 dias |
-| Covariáveis | `PRECO`, `FLAG_PROMOCAO` |
+| Problem type | Time series forecasting |
+| Target column | `QUANTIDADE_ESTOQUE` |
+| Item ID column | `ID_PRODUTO` |
+| Time stamp column | `DATA_EVENTO` |
+| Forecast length | `7` |
+| Frequência | diária, conforme detecção/configuração atual do Canvas |
+| Colunas adicionais | `PRECO`, `FLAG_PROMOCAO` quando reconhecidas/permitidas no fluxo real |
+| Objective metric | registrar a escolha real; Canvas pode escolher uma default |
 
-## Passo a passo
+> A interface atual prevalece sobre os nomes planejados acima. Se um rótulo ou opção tiver mudado, registre o que a AWS realmente mostrar.
 
-1. Acesse a conta AWS destinada ao Lab.
-2. Abra o Amazon SageMaker e entre no SageMaker Canvas.
-3. Importe o CSV principal.
-4. Confira se o schema e os tipos foram reconhecidos corretamente.
-5. Crie um novo modelo de previsão de séries temporais.
-6. Defina `QUANTIDADE_ESTOQUE` como target.
-7. Defina `ID_PRODUTO` como identificador dos itens.
-8. Defina `DATA_EVENTO` como timestamp.
-9. Configure frequência diária e horizonte inicial de 7 dias.
-10. Revise `PRECO` e `FLAG_PROMOCAO` como variáveis explicativas quando o fluxo do Canvas permitir.
-11. Inicie o treinamento.
-12. Após o treinamento, registre somente as métricas realmente exibidas pelo Canvas.
-13. Analise a importância/impacto das variáveis disponibilizada pela interface.
-14. Gere previsões para um ou mais SKUs.
-15. Exporte os resultados em CSV quando disponível.
-16. Salve apenas screenshots reais e sanitizados.
-17. Ao concluir, siga [`12-cleanup-aws.md`](12-cleanup-aws.md).
+---
 
-## Evidências a coletar
+# Antes de abrir o Canvas
 
-Salve as imagens em `assets/screenshots/` usando:
+1. Confirme a conta e a região AWS que serão usadas.
+2. Confirme elegibilidade de Free Tier, se houver.
+3. Defina um teto financeiro autorizado antes de qualquer build.
+4. Deixe o CSV pronto no computador.
+5. Abra [`../assets/screenshots/README.md`](../assets/screenshots/README.md) para saber quais evidências coletar.
+6. Não use credenciais de administrador quando não forem necessárias.
+7. Não publique Account ID, e-mail, IAM username, ARN sensível, access keys, tokens, billing ou URLs assinadas.
 
-1. `01-canvas-home.png`
-2. `02-import-dataset.png`
-3. `03-dataset-preview.png`
-4. `04-model-configuration.png`
-5. `05-training.png`
-6. `06-model-analysis.png`
-7. `07-feature-importance.png`
-8. `08-forecast.png`
-9. `09-export.png`
+---
 
-Consulte também [`../assets/screenshots/README.md`](../assets/screenshots/README.md).
+# Passo 1 — Entrar na AWS
 
-## Resultados a registrar
+1. Entre na AWS Management Console com a conta destinada ao Lab.
+2. Confirme a região.
+3. Não registre em screenshots identificadores administrativos desnecessários.
 
-Preencha somente com dados reais do Canvas:
+Evidência recomendada depois de abrir o Canvas:
 
-| Métrica | Resultado |
-|---|---|
-| WAPE | PENDENTE |
-| MAPE | PENDENTE |
-| RMSE | PENDENTE |
-| MASE | PENDENTE |
-| Average wQL | PENDENTE |
+`assets/screenshots/01-canvas-home.png`
 
-Nem toda execução/interface exibe necessariamente todas as métricas acima. Registre apenas as métricas efetivamente apresentadas no seu modelo. Os critérios de interpretação estão em [`06-avaliacao-modelo.md`](06-avaliacao-modelo.md).
+---
 
-## Destinos dos resultados
+# Passo 2 — Abrir o SageMaker Canvas
 
-- métricas: `results/metrics/`;
-- forecasts: `results/predictions/`;
-- exports auxiliares: `results/exports/`.
+1. Abra Amazon SageMaker.
+2. Entre na aplicação SageMaker Canvas disponível para sua conta/domínio.
+3. Aguarde o workspace carregar.
 
-## Checklist de segurança antes do commit
+> A cobrança de workspace termina quando a sessão/aplicação é encerrada conforme a AWS; fechar apenas a aba não é o procedimento de cleanup.
 
-- [ ] nenhum Access Key ID;
-- [ ] nenhum Secret Access Key;
-- [ ] nenhum Session Token;
-- [ ] nenhum e-mail pessoal desnecessário;
-- [ ] nenhum Account ID desnecessário;
-- [ ] nenhum ARN ou usuário IAM sensível;
-- [ ] nenhuma informação privada de billing.
+---
+
+# Passo 3 — Importar o dataset
+
+1. No Canvas, vá para a área de datasets/importação.
+2. Escolha a opção de import/local upload compatível com a interface atual.
+3. Selecione:
+
+```text
+dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
+```
+
+4. Confirme a importação.
+5. Confira se aparecem as cinco colunas esperadas:
+   - `ID_PRODUTO`
+   - `DATA_EVENTO`
+   - `PRECO`
+   - `FLAG_PROMOCAO`
+   - `QUANTIDADE_ESTOQUE`
+6. Confira os tipos inferidos, principalmente `DATA_EVENTO` como data/hora compatível.
+
+Evidências:
+
+- `02-import-dataset.png`
+- `03-dataset-preview.png`
+
+---
+
+# Passo 4 — Criar o modelo
+
+Na documentação atual da AWS para time series:
+
+1. Abra **My models**.
+2. Escolha **New model**.
+3. Dê um nome simples e não sensível ao modelo.
+4. Selecione **Time series forecasting**.
+5. Selecione o dataset importado.
+6. No **Build** tab, escolha a coluna target.
+
+Target planejado:
+
+```text
+QUANTIDADE_ESTOQUE
+```
+
+---
+
+# Passo 5 — Configure model
+
+Abra **Configure model** e registre a configuração real.
+
+Planejamento:
+
+```text
+Item ID column = ID_PRODUTO
+Time stamp column = DATA_EVENTO
+Forecast length = 7
+```
+
+A AWS informa atualmente que o Forecast length usa a unidade temporal detectada nos dados.
+
+Se houver opções adicionais:
+
+- `Group column`: não adicionar sem necessidade do Lab;
+- holiday schedule: opcional, não necessário para este dataset educacional;
+- Objective metric: registrar a métrica realmente escolhida/default;
+- Algorithms: aparecem no Standard build; não selecionar modelos extras apenas por aparência.
+
+Evidência:
+
+`04-model-configuration.png`
+
+---
+
+# Passo 6 — Escolher Quick Build ou Standard Build
+
+A documentação atual informa que time-series forecasting suporta os dois modos:
+
+## Quick Build
+
+- tempo médio publicado: aproximadamente **2–20 minutos**;
+- usa um único algoritmo tree-based;
+- menor tempo operacional para uma primeira execução.
+
+## Standard Build
+
+- tempo médio publicado: aproximadamente **2–4 horas**;
+- permite seleção de algoritmos;
+- Canvas treina múltiplos candidatos e pode construir ensemble;
+- custo/tempo potencialmente maiores.
+
+## Decisão recomendada para o Lab
+
+Não iniciar nenhuma opção antes da autorização financeira.
+
+Depois de autorizado, **começar pela menor execução que satisfaça a evidência DIO**. Quick Build é a primeira opção a considerar para reduzir tempo/custo; Standard Build só deve ser escolhido se a interface/evidência necessária ou o objetivo pedagógico justificar o custo adicional.
+
+Não assumir que Standard é obrigatório: o README da DIO exige treinamento/análise, não um tipo específico de build.
+
+---
+
+# Passo 7 — Treinar
+
+1. Revise novamente dataset/configuração.
+2. Verifique a estimativa/avisos de custo exibidos pela conta, se disponíveis.
+3. Somente com autorização explícita, inicie o build escolhido.
+4. Espere o modelo chegar ao estado pronto para análise.
+
+Evidência:
+
+`05-training.png`
+
+---
+
+# Passo 8 — Analisar métricas
+
+Na página **Analyze** de modelos time-series, a AWS documenta atualmente métricas como:
+
+- Average Weighted Quantile Loss (Average wQL);
+- WAPE;
+- RMSE;
+- MAPE;
+- MASE.
+
+Registre **somente as métricas efetivamente apresentadas na sua execução** em:
+
+`docs/15-resultados-canvas.md`
+
+Evidência:
+
+`06-model-analysis.png`
+
+Não copiar métricas AutoGluon para esta seção.
+
+---
+
+# Passo 9 — Column impact / características relevantes
+
+A documentação atual da AWS informa que a página Analyze de time series possui **Column impact**, que representa o peso relativo de cada coluna nas previsões.
+
+1. Registre as colunas realmente mostradas.
+2. Registre scores/percentuais somente se visíveis.
+3. Não interprete Column impact como causalidade.
+4. Se a interface não mostrar esse bloco na execução específica, documente a ausência em vez de inventar resultado.
+
+Evidência:
+
+`07-feature-importance.png`
+
+---
+
+# Passo 10 — Decidir se re-treino é necessário
+
+O README da DIO diz para fazer ajustes e re-treinar **se necessário**.
+
+Depois do primeiro build, documente uma decisão objetiva em `docs/15-resultados-canvas.md`:
+
+- `Re-treino necessário: NÃO` + justificativa; ou
+- `Re-treino necessário: SIM` + o que será alterado e por quê.
+
+Não executar segundo treino apenas para marcar checklist.
+
+---
+
+# Passo 11 — Gerar previsão
+
+Use o modelo treinado para gerar uma previsão real de estoque conforme as opções da interface.
+
+Registre:
+
+- SKU(s) escolhido(s), se aplicável;
+- horizonte mostrado;
+- P10/P50/P90 se exibidos;
+- observações relevantes sem superinterpretar.
+
+Evidência:
+
+`08-forecast.png`
+
+---
+
+# Passo 12 — Exportar
+
+1. Use o mecanismo de export/download disponível na interface atual.
+2. Salve o export real somente se não contiver dados sensíveis.
+3. Quando apropriado, coloque o arquivo em `results/exports/`.
+4. Registre nome/tipo do export em `docs/15-resultados-canvas.md`.
+
+Evidência:
+
+`09-export.png`
+
+---
+
+# Passo 13 — Conclusões
+
+Preencha `docs/15-resultados-canvas.md` com:
+
+- configuração real;
+- build type;
+- métricas;
+- Column impact;
+- previsão;
+- export;
+- decisão sobre re-treino;
+- insights;
+- limitações;
+- custo/cleanup verificáveis.
+
+Depois atualize o README, sem misturar resultados Python e Canvas.
+
+---
+
+# Passo 14 — Verificação automática
+
+Antes de enviar à DIO:
+
+```bash
+python scripts/check_dio_submission.py --strict
+```
+
+O resultado esperado somente após todas as evidências reais é:
+
+```text
+DIO SUBMISSION READY: YES
+```
+
+Se retornar `NO`, não enviar ainda.
+
+---
+
+# Passo 15 — Logout e cleanup
+
+Ao terminar, siga integralmente:
+
+[`12-cleanup-aws.md`](12-cleanup-aws.md)
+
+A etapa não termina no screenshot/export: precisa incluir logout/revisão de recursos e Billing.
+
+---
+
+## Referências oficiais consultadas em 30/08/2026
+
+- Build a model — SageMaker Canvas: https://docs.aws.amazon.com/sagemaker/latest/dg/canvas-build-model-how-to.html
+- How custom models work: https://docs.aws.amazon.com/sagemaker/latest/dg/canvas-build-model.html
+- Metrics reference: https://docs.aws.amazon.com/sagemaker/latest/dg/canvas-metrics.html
+- Evaluate model performance: https://docs.aws.amazon.com/sagemaker/latest/dg/canvas-scoring.html
+- Advanced model settings: https://docs.aws.amazon.com/sagemaker/latest/dg/canvas-advanced-settings.html
+- Canvas pricing: https://aws.amazon.com/sagemaker/ai/canvas/pricing/
