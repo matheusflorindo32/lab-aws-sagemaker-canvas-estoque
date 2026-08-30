@@ -1,6 +1,6 @@
 # 📦 Inventory Forecasting Studio
 
-### DIO SageMaker Canvas Challenge + implementação open source com AutoGluon TimeSeries
+### DIO SageMaker Canvas Challenge + implementação open source reproduzível com AutoGluon TimeSeries
 
 [![DIO](https://img.shields.io/badge/DIO-Project%20Lab-6C63FF)](https://www.dio.me/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -8,168 +8,122 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-Forecasting%20Studio-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Dataset validation](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/dataset-validation.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/dataset-validation.yml)
 [![Python forecasting](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/python-forecasting.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/python-forecasting.yml)
-[![Security scan](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml)
+[![Security](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml)
 
-> Forecasting multi-SKU com validação temporal, benchmarks, AutoML probabilístico, P10/P50/P90, leaderboard, Streamlit, exports e CI reproduzível.
+> Forecasting multi-SKU com validação temporal rolling-origin, baselines, AutoML probabilístico, P10/P50/P90, calibração, diagnóstico por SKU, Streamlit, CI e evidências reproduzíveis.
 
 ---
 
-## 🎯 Resumo executivo
+## Estado do projeto
 
-Este repositório evolui o desafio **“Previsão de Estoque Inteligente na AWS com SageMaker Canvas”**, da Digital Innovation One, preservando o problema original de prever `QUANTIDADE_ESTOQUE` por SKU.
+Este repositório preserva duas trilhas distintas:
 
-O projeto possui **duas trilhas explicitamente separadas**:
-
-| Trilha | Status | Papel |
+| Trilha | Status | Objetivo |
 |---|---|---|
-| ☁️ Amazon SageMaker Canvas | ⏳ **NÃO EXECUTADA** | fluxo original proposto pelo desafio DIO, documentado passo a passo |
-| 🐍 Inventory Forecasting Studio | ✅ **EXECUTADA** | implementação open source reproduzível em Python + AutoGluon + Streamlit + GitHub Actions |
+| ☁️ SageMaker Canvas | ⏳ **NÃO EXECUTADA** | cumprir o fluxo original específico da DIO |
+| 🐍 Python / AutoGluon / Streamlit | ✅ **EXECUTADA** | implementação open source reproduzível e auditável |
 
-Nenhuma execução de SageMaker Canvas é simulada ou apresentada como realizada.
+Nenhuma métrica Python é apresentada como resultado AWS.
 
-> **Integridade experimental:** todos os números apresentados na trilha Python foram produzidos por código executado sobre o dataset real do repositório e verificados no GitHub Actions. Métricas AWS permanecem pendentes.
+### O que este projeto é hoje
 
----
-
-## 🧩 Problema de negócio
-
-Gestão inadequada de estoque pode gerar:
-
-- **ruptura**, com indisponibilidade e perda de vendas;
-- **excesso**, com capital imobilizado e custo operacional;
-- dificuldade de priorizar SKUs com comportamento mais instável.
-
-O objetivo é estimar o comportamento futuro de estoque para cada SKU em horizonte de **7 dias**, preservando o target definido pelo desafio.
-
-### ⚠️ Estoque não é demanda
-
-`QUANTIDADE_ESTOQUE` foi mantida como target para respeitar a proposta da DIO. Em uma implementação corporativa, uma evolução mais robusta seria prever **demanda/vendas** e então incorporar lead time, safety stock, reorder point, nível de serviço e custos de ruptura/armazenagem.
+- demonstrador funcional de forecasting multi-SKU;
+- projeto educacional/portfólio com experimentação real;
+- implementação reproducível com CI;
+- **não** é plataforma de inventory optimization production-ready.
 
 ---
 
-## 📊 Dataset
+# Problema
 
-Dataset principal:
+O desafio original prevê `QUANTIDADE_ESTOQUE` por SKU. Esse target foi mantido por aderência pedagógica.
 
-```text
-datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
-```
+> **Estoque observado não é demanda.**
 
-Validação executada em CI:
+Em uma solução corporativa, o fluxo mais apropriado tende a ser:
 
-| Propriedade | Resultado |
+`demanda/saídas → forecast → lead time → safety stock → reorder point → recomendação de reposição → estoque projetado`
+
+Neste dataset, reposições/resets do estoque são intervenções operacionais e aumentam a dificuldade de interpretação.
+
+---
+
+# Dataset
+
+Arquivo principal:
+
+`datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv`
+
+| Propriedade | Resultado validado |
 |---|---:|
 | Registros | 1.000 |
 | SKUs | 25 |
-| Observações por SKU | 40 |
+| Observações/SKU | 40 |
 | Frequência | diária |
-| Data inicial | 2023-12-31 |
-| Data final | 2024-02-08 |
-| Campos ausentes | 0 |
+| Intervalo | 2023-12-31 a 2024-02-08 |
+| Missing | 0 |
 | Duplicatas exatas | 0 |
-| Chaves `SKU + data` duplicadas | 0 |
+| Duplicatas SKU+data | 0 |
 | Pontos diários ausentes | 0 |
 | Linhas inválidas | 0 |
 
-### Dicionário de dados
+Dataset SHA-256 do experimento P1:
 
-| Campo | Papel |
-|---|---|
-| `ID_PRODUTO` | Item ID / SKU |
-| `DATA_EVENTO` | Timestamp |
-| `PRECO` | Covariável |
-| `FLAG_PROMOCAO` | Covariável |
-| `QUANTIDADE_ESTOQUE` | Target |
-
-Os três CSVs originais da DIO permanecem preservados. Consulte [`datasets/README.md`](datasets/README.md).
+`fe8ffe48cc34cd8540ecba10984066fe503b0bb5ca9d55f9280d5b1960649031`
 
 ---
 
-## 🔎 EDA reproduzível
+# Protocolo experimental
 
-```bash
-python scripts/analyze_dataset.py
-```
+## Holdout final
 
-Resultados verificados:
+- treino: 33 observações/SKU;
+- teste: 7 observações/SKU;
+- 25 × 7 = 175 observações externas.
 
-| Indicador | Resultado |
-|---|---:|
-| Preço médio | 78,64 |
-| Preço mínimo / máximo | 18,31 / 187,04 |
-| Estoque médio | 55,73 |
-| Estoque mínimo / máximo | 1 / 100 |
-| Registros promocionais | 20,60% |
-| Estoque médio em promoção | 57,93 |
-| Estoque médio sem promoção | 55,15 |
+## Robustez temporal P1
 
-Top 5 SKUs por volatilidade descritiva: `1003`, `1009`, `1018`, `1024`, `1017`.
+Foram adicionados **3 folds rolling-origin / expanding-window**, com testes externos de 7 dias **não sobrepostos**:
 
-Esses valores são descritivos e **não demonstram causalidade**. Veja [`docs/03-analise-exploratoria.md`](docs/03-analise-exploratoria.md).
+| Fold | Treino/SKU | Teste/SKU |
+|---:|---:|---:|
+| 1 | 19 | 7 |
+| 2 | 26 | 7 |
+| 3 | 33 | 7 |
+
+A seleção do modelo AutoGluon acontece pela validação interna; o teste externo não escolhe o modelo.
 
 ---
 
-# 🐍 Trilha executada — Inventory Forecasting Studio
+# Benchmarks
 
-## Arquitetura
-
-```mermaid
-flowchart LR
-    A[CSV DIO] --> B[Validação]
-    B --> C[EDA]
-    C --> D[Holdout temporal 7 dias]
-    D --> E[Benchmarks]
-    D --> F[AutoGluon TimeSeries]
-    E --> G[Leaderboard]
-    F --> G
-    G --> H[P10 / P50 / P90]
-    H --> I[Streamlit Studio]
-    I --> J[CSV / gráficos / insights]
-```
-
-### Protocolo temporal
-
-Para cada SKU:
-
-- **33 dias** → treino;
-- **7 dias finais** → holdout;
-- 25 SKUs × 7 dias = **175 observações reais de teste**.
-
-Nenhum target do holdout é utilizado no treino.
-
----
-
-## 🧪 Benchmarks
-
-Foram executados três baselines transparentes:
+Baselines:
 
 - `Naive`;
-- `SeasonalNaive7`;
-- `Drift`.
+- `Drift`;
+- `SeasonalNaive7`.
 
-| Rank | Modelo | MAE | RMSE | WAPE | MAPE | MASE | WQL |
-|---:|---|---:|---:|---:|---:|---:|---:|
-| 1 | Naive | 42.828571 | 50.790944 | 0.721714 | 1.261017 | 2.837697 | 0.662766 |
-| 2 | SeasonalNaive7 | 44.045714 | 48.260010 | 0.742224 | 2.417650 | 2.849374 | 0.718580 |
-| 3 | Drift | 47.422143 | 56.697834 | 0.799121 | 1.145737 | 3.164879 | 0.709079 |
+O Naive foi o melhor baseline por WAPE nos três folds.
 
-O workflow verificou **525 linhas de previsão**: 175 por modelo.
+| Modelo | WAPE médio | RMSE médio | MACRO_MASE médio | WQL médio |
+|---|---:|---:|---:|---:|
+| **Naive** | **0.739365** | **45.785757** | **2.588005** | **0.647723** |
+| Drift | 0.809554 | 52.004579 | 2.853404 | 0.690580 |
+| SeasonalNaive7 | 0.874120 | 49.939643 | 3.010651 | 0.818905 |
 
-Os baselines são deliberadamente simples e apresentaram erro elevado. Isso estabelece uma referência honesta para avaliar modelos mais expressivos.
+`MACRO_MASE` = MASE calculado por SKU e depois promediado.
 
 ---
 
-## 🤖 AutoGluon TimeSeries — execução real
+# AutoGluon TimeSeries
 
-Ambiente registrado pelo workflow:
+Configuração executada:
 
 ```text
-AutoGluon: 1.6.1
+AutoGluon TimeSeries: 1.6.1
 Python: 3.12.14
-CPU: 4
-GPU: não disponível
-Treino: 825 linhas / 25 séries
 prediction_length: 7
+freq: D
 eval_metric: WQL
 quantiles: [0.1, 0.5, 0.9]
 known covariates: PRECO, FLAG_PROMOCAO
@@ -177,129 +131,179 @@ preset: medium_quality
 random_seed: 123
 ```
 
-Modelos treinados:
+Famílias treinadas no holdout final:
 
 `SeasonalNaive` · `RecursiveTabular` · `DirectTabular` · `ETS` · `Theta` · `Chronos2` · `Toto2` · `WeightedEnsemble`
 
-Tempo de treinamento reportado pelo AutoGluon: **11,99 s** após instalação das dependências.
+## Resultados externos por fold
 
-### Leaderboard no holdout
+| Fold | Selecionado internamente | Vencedor externo | Rank externo do ensemble | WAPE do ensemble | WQL do ensemble |
+|---:|---|---|---:|---:|---:|
+| 1 | WeightedEnsemble | **Chronos2** | **3** | 0.700500 | 0.424289 |
+| 2 | WeightedEnsemble | **WeightedEnsemble** | **1** | 0.441683 | 0.262329 |
+| 3 | WeightedEnsemble | **WeightedEnsemble** | **1** | 0.358348 | 0.223493 |
 
-O AutoGluon inverte o sinal de métricas de perda internamente para seguir `higher_is_better`. A coluna **WQL loss** abaixo usa a magnitude positiva, em que menor é melhor.
+### Interpretação de estabilidade
 
-| Rank | Modelo | WQL loss |
-|---:|---|---:|
-| 1 | **WeightedEnsemble** | **0.223493** |
-| 2 | DirectTabular | 0.228474 |
-| 3 | Chronos2 | 0.265239 |
-| 4 | Toto2 | 0.283392 |
-| 5 | RecursiveTabular | 0.407835 |
-| 6 | SeasonalNaive | 0.416962 |
-| 7 | ETS | 0.448723 |
-| 8 | Theta | 0.480026 |
+- **selection stability: `stable`** — WeightedEnsemble foi escolhido pela validação interna em 3/3 folds;
+- **external test stability: `unstable`** — venceu 2/3 testes, mas no fold 1 caiu para terceiro e teve WQL ~27,16% pior que o Chronos2.
 
-### Ensemble vencedor
+Portanto, o projeto **não afirma que WeightedEnsemble é universalmente o melhor modelo**.
 
-| Componente | Peso |
+## Resultado agregado em 3 folds
+
+| Métrica | Média | Mediana | Desvio-padrão |
+|---|---:|---:|---:|
+| MAE | 26.145005 | 21.960458 | 7.857459 |
+| RMSE | 31.917570 | 28.859860 | 7.398349 |
+| WAPE | 0.500177 | 0.441683 | 0.178418 |
+| WQL | 0.303370 | 0.262329 | 0.106504 |
+
+### AutoGluon vs melhor baseline
+
+Nos mesmos três folds, comparando o modelo selecionado pelo AutoGluon ao Naive:
+
+- WAPE médio: **32,35% menor**;
+- RMSE médio: **30,29% menor**;
+- WQL médio: **53,16% menor**.
+
+Isso é evidência positiva neste dataset, não garantia de desempenho de produção.
+
+---
+
+# Forecast probabilístico — P10/P50/P90
+
+A calibração foi medida, não presumida.
+
+| Diagnóstico agregado | Resultado |
 |---|---:|
-| DirectTabular | **81%** |
-| Toto2 | 12% |
-| Chronos2 | 5% |
-| RecursiveTabular | 2% |
+| `y <= P10` | 20.95% |
+| `y <= P50` | 51.05% |
+| `y <= P90` | 88.19% |
+| Coverage P10–P90 | **67.24%** |
+| Coverage nominal esperado | ~80% |
+| Largura média P10–P90 | 68.52 |
+| Quantile crossings | **0** |
+
+Os intervalos apresentam **subcoverage**. Quantis nativos do modelo não significam calibração perfeita.
+
+A análise por horizonte h=1..7 e por SKU está em [`results/validated/`](results/validated/).
 
 ---
 
-## 📈 Métricas independentes do melhor modelo
+# Diagnóstico por SKU
 
-As 175 previsões do `WeightedEnsemble` foram reconciliadas com o holdout real e as métricas foram recalculadas independentemente:
+Cinco menores MAEs médios nos três folds:
 
-| Métrica | AutoGluon WeightedEnsemble | Melhor baseline (`Naive`) |
-|---|---:|---:|
-| MAE | **21.265417** | 42.828571 |
-| RMSE | **26.538214** | 50.790944 |
-| WAPE | **0.358348** | 0.721714 |
-| MAPE | 1.472072 | 1.261017 |
-| WQL | **0.223493** | 0.662766 |
+`1011`, `1013`, `1005`, `1022`, `1024`.
 
-No protocolo utilizado, o AutoGluon reduziu substancialmente MAE, RMSE, WAPE e WQL em relação ao melhor baseline simples. O MAPE não melhorou, reforçando que métricas de forecasting devem ser analisadas em conjunto — especialmente com valores reais de estoque muito baixos.
+Cinco maiores:
 
-**Isso não é evidência de desempenho de produção.** É um resultado de um holdout curto em dataset educacional.
+`1006`, `1008`, `1004`, `1002`, `1015`.
 
-Detalhes: [`docs/07-resultados-python.md`](docs/07-resultados-python.md).
+Essas diferenças são descritivas; o histórico curto não permite conclusão causal.
 
 ---
 
-## 🎯 P10 / P50 / P90
+# Holdout final
 
-O AutoGluon gerou quantis probabilísticos nativos:
+No fold final, WeightedEnsemble teve:
 
-- **P10** → `0.1`;
-- **P50** → `0.5`;
-- **P90** → `0.9`.
-
-As 175 previsões do holdout com `mean`, `0.1`, `0.5` e `0.9` foram preservadas como artefato do GitHub Actions.
-
-Nos benchmarks leves, os quantis são construídos empiricamente a partir de inovações históricas e são explicitamente tratados como baseline de incerteza — não como equivalentes aos quantis nativos do AutoGluon.
-
----
-
-## 🔬 Feature importance
-
-Resultado real do AutoGluon:
-
-| Covariável | Importance |
+| Métrica | Valor |
 |---|---:|
-| `PRECO` | 0.000169 |
-| `FLAG_PROMOCAO` | -0.000625 |
+| MAE | 21.265417 |
+| RMSE | 26.538214 |
+| WAPE | 0.358348 |
+| MAPE | 1.472072 |
+| WQL | 0.223493 |
 
-Os valores ficaram praticamente em zero. Nesta execução, **não há evidência de contribuição material dessas covariáveis** para o ensemble.
+Feature importance:
 
-Isso não significa que preço ou promoção não importem no mundo real e não estabelece causalidade; apenas descreve o comportamento desse experimento.
+- `PRECO`: 0.000169;
+- `FLAG_PROMOCAO`: -0.000625.
+
+Os valores ficaram praticamente nulos neste experimento e não são interpretados causalmente.
 
 ---
 
-# 🖥️ Streamlit — Inventory Forecasting Studio
+# Evidências e reprodutibilidade
 
-O arquivo [`app.py`](app.py) fornece uma interface visual para:
+Resultados P1 pequenos e auditáveis são preservados em:
 
-- visualizar dataset e EDA;
-- selecionar horizonte;
-- executar benchmarks;
-- visualizar leaderboard;
-- selecionar modelo e SKU;
-- plotar forecast;
-- visualizar P10/P50/P90;
-- baixar leaderboard e forecast em CSV;
-- consultar o status dos artefatos AutoGluon.
+[`results/validated/`](results/validated/)
 
-### Executar a interface
+Incluindo:
+
+- métricas por fold;
+- summary agregado;
+- estabilidade dos modelos;
+- calibração por horizonte;
+- métricas por SKU;
+- manifesto com dataset hash e proveniência do artifact;
+- summary dos benchmarks.
+
+### Executar
 
 ```bash
 python -m venv .venv
+pip install -r requirements-ml.txt
+python scripts/validate_dataset.py
+python scripts/run_benchmarks.py
+python scripts/train_autogluon.py --time-limit 180 --presets medium_quality
+python scripts/train_autogluon_multifold.py --time-limit 180 --presets medium_quality
+```
+
+### Streamlit
+
+```bash
 pip install -r requirements-app.txt
 streamlit run app.py
 ```
 
-Guia: [`docs/08-inventory-forecasting-studio.md`](docs/08-inventory-forecasting-studio.md).
-
-### Executar AutoGluon
-
-```bash
-pip install -r requirements-ml.txt
-python scripts/train_autogluon.py --time-limit 300 --presets medium_quality
-```
+O Studio exibe dataset/EDA, benchmarks, leaderboard, estabilidade externa, calibração por horizonte, diagnóstico por SKU e forecasts.
 
 ---
 
-# ☁️ Trilha original DIO — Amazon SageMaker Canvas
+# Qualidade e CI
 
-## Status: ⏳ NÃO EXECUTADA
+A suíte atual possui **23 testes**, cobrindo:
 
-A trilha original foi mantida integralmente como referência e documentação do desafio.
+- qualidade do dataset;
+- duplicata SKU+data;
+- métricas de ponto;
+- WQL/pinball;
+- MACRO_MASE;
+- rolling-origin e ausência de leakage temporal;
+- benchmarks multifold;
+- configuração AutoGluon;
+- separação entre seleção interna e estabilidade externa;
+- contratos de UI;
+- secret scanner.
+
+Workflows incluem:
+
+- Dataset validation;
+- Python forecasting;
+- AutoGluon experiment;
+- Streamlit smoke test;
+- secret scan;
+- dependency audit com `pip-audit`.
+
+GitHub Actions oficiais estão pinadas por commit SHA e workflows usam `contents: read`.
+
+## Risco de dependência conhecido
+
+`lightning 2.6.5` possui `PYSEC-2026-3624 / CVE-2026-58659`. Em 30/08/2026 ainda não havia release PyPI corrigida. O fluxo atual não aceita checkpoints não confiáveis nem chama o caminho vulnerável com conteúdo de usuário; o finding permanece como exceção temporária, estreita e documentada em [`SECURITY.md`](SECURITY.md).
+
+---
+
+# ☁️ SageMaker Canvas / DIO
+
+## Status: **NÃO EXECUTADO**
 
 Configuração planejada:
 
-| Parâmetro | Configuração |
+| Parâmetro | Valor |
 |---|---|
 | Tipo | Time Series Forecasting |
 | Target | `QUANTIDADE_ESTOQUE` |
@@ -309,223 +313,33 @@ Configuração planejada:
 | Horizonte | 7 dias |
 | Covariáveis | `PRECO`, `FLAG_PROMOCAO` |
 
-```mermaid
-flowchart LR
-    A[Dataset CSV] --> B[Amazon SageMaker Canvas]
-    B --> C[Preparação dos dados]
-    C --> D[Time Series Forecasting]
-    D --> E[Avaliação]
-    E --> F[Forecast]
-    F --> G[Insights]
-```
+O guia de execução está em [`docs/04-configuracao-sagemaker-canvas.md`](docs/04-configuracao-sagemaker-canvas.md).
 
-Guia: [`docs/04-configuracao-sagemaker-canvas.md`](docs/04-configuracao-sagemaker-canvas.md).
+O gate FinOps atualizado está em [`docs/10-custos-aws.md`](docs/10-custos-aws.md).
 
-### Métricas Canvas
-
-| Métrica | Resultado |
-|---|---|
-| WAPE | **NÃO EXECUTADO** |
-| MAPE | **NÃO EXECUTADO** |
-| RMSE | **NÃO EXECUTADO** |
-| MASE | **NÃO EXECUTADO** |
-| Average wQL | **NÃO EXECUTADO** |
-
-Nenhum resultado Python é apresentado como se fosse proveniente da AWS.
+**Nenhum recurso AWS pago deve ser iniciado sem autorização explícita.**
 
 ---
 
-## 🧠 Arquitetura corporativa futura
+# Limitações
 
-```mermaid
-flowchart LR
-    A[ERP / Vendas / Estoque] --> B[Amazon S3]
-    B --> C[AWS Glue]
-    C --> D[Feature Engineering]
-    D --> E[Amazon SageMaker / Forecasting Engine]
-    E --> F[Forecast de Demanda]
-    F --> G[Reorder Engine]
-    G --> H[ERP]
-    F --> I[Dashboard]
-    E --> J[Monitoramento / Retraining]
-```
-
-🚀 **Evolução futura — não implementada neste Lab.**
+- 40 observações por SKU continuam sendo pouco histórico;
+- primeiro fold possui somente 19 pontos de treino;
+- três folds melhoram a evidência, mas não provam generalização corporativa;
+- dataset educacional;
+- estoque é influenciado por reposição/intervenção;
+- não há série explícita de demanda/vendas;
+- covariáveis futuras precisam ser conhecidas no momento da previsão;
+- P10–P90 está subcalibrado;
+- estabilidade externa do ensemble é limitada;
+- não existem autenticação, banco, serving, monitoramento de produção ou política automática de reposição.
 
 ---
 
-## ✅ Qualidade, testes e CI
+# Próxima evolução correta
 
-Workflows:
+Depois de concluir a trilha Canvas/DIO, um MVP real deveria mudar o foco de “mais modelos” para **decisão de estoque**:
 
-- `dataset-validation.yml` — schema, integridade, EDA e testes;
-- `python-forecasting.yml` — compilação, **17 testes**, backtest, artefatos e verificação das 525 previsões;
-- `autogluon-experiment.yml` — instalação, treino, avaliação, feature importance e artefatos AutoGluon;
-- `security.yml` — scanner de padrões de segredos.
+`vendas/demanda + estoque atual + lead time → forecast → safety stock → reorder point → quantidade recomendada`
 
-Comandos locais leves:
-
-```bash
-python -m py_compile scripts/*.py src/inventory_forecasting/*.py
-python -m unittest discover -s tests -v
-python scripts/validate_dataset.py
-python scripts/analyze_dataset.py
-python scripts/run_benchmarks.py
-python scripts/scan_secrets.py
-```
-
----
-
-## 🔐 Segurança
-
-O repositório não exige credenciais AWS para a trilha Python.
-
-Nunca versione:
-
-```text
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
-AWS_SESSION_TOKEN
-.env
-.aws/
-*.pem
-*.key
-*.p12
-*.pfx
-```
-
-O scanner dedicado roda com `contents: read`. Consulte [`SECURITY.md`](SECURITY.md).
-
----
-
-## 📦 Artefatos e rastreabilidade
-
-Resultados versionados:
-
-```text
-results/
-├── metrics/benchmark_metrics.csv
-├── exports/benchmark_leaderboard.csv
-└── autogluon/
-    ├── leaderboard.csv
-    ├── evaluation.txt
-    ├── feature_importance.csv
-    └── metrics_summary.csv
-```
-
-Artefatos completos preservados no GitHub Actions:
-
-- `inventory-forecasting-benchmarks`;
-- `inventory-forecasting-autogluon`.
-
-A execução AutoGluon também exportou as **175 previsões** com `mean`, P10, P50 e P90.
-
----
-
-## ⚠️ Limitações
-
-- dataset educacional/sintético;
-- apenas 40 dias por SKU;
-- somente 25 SKUs;
-- apenas um holdout final de 7 dias;
-- resets periódicos de estoque geram descontinuidades;
-- ausência de vendas/demanda explícita;
-- ausência de lead time, fornecedor, safety stock e service level;
-- ausência de custos de ruptura/armazenagem;
-- preço e promoção tiveram feature importance quase nula nesta execução;
-- covariáveis futuras precisam ser conhecidas ou definidas por cenário;
-- previsão de estoque não equivale a política automática de reposição.
-
-Veja [`docs/09-limitacoes-e-evolucoes.md`](docs/09-limitacoes-e-evolucoes.md).
-
----
-
-## 📁 Estrutura principal
-
-```text
-.
-├── .github/workflows/
-│   ├── dataset-validation.yml
-│   ├── python-forecasting.yml
-│   ├── autogluon-experiment.yml
-│   └── security.yml
-├── datasets/
-├── docs/
-│   ├── 03-analise-exploratoria.md
-│   ├── 04-configuracao-sagemaker-canvas.md
-│   ├── 05-implementacao-python.md
-│   ├── 06-avaliacao-modelo.md
-│   ├── 07-resultados-python.md
-│   ├── 08-inventory-forecasting-studio.md
-│   ├── 09-limitacoes-e-evolucoes.md
-│   ├── 10-custos-aws.md
-│   └── 12-cleanup-aws.md
-├── results/
-├── scripts/
-├── src/inventory_forecasting/
-├── tests/
-├── app.py
-├── requirements-app.txt
-├── requirements-ml.txt
-├── SECURITY.md
-└── README.md
-```
-
----
-
-## ✅ Checklist
-
-### Entrega técnica open source
-
-- [x] Fork e rastreabilidade com a DIO
-- [x] Dataset preservado e validado
-- [x] EDA reproduzível
-- [x] Holdout temporal sem leakage do target
-- [x] Benchmarks executados
-- [x] Métricas reais
-- [x] AutoGluon TimeSeries executado
-- [x] Leaderboard real
-- [x] P10/P50/P90 reais do AutoGluon
-- [x] Feature importance real
-- [x] Streamlit Studio implementado
-- [x] Exports e artefatos
-- [x] Testes e CI
-- [x] Security scan
-
-### Requisito específico SageMaker Canvas
-
-- [ ] Upload no Canvas
-- [ ] Treinamento no Canvas
-- [ ] Métricas do Canvas
-- [ ] Screenshots do Canvas
-- [ ] Export do Canvas
-
-> Portanto, a implementação open source está executada e reproduzível, mas **não deve ser descrita como execução do SageMaker Canvas** se a avaliação da DIO exigir especificamente evidências da plataforma AWS.
-
----
-
-## 📚 Documentação
-
-- [Implementação Python](docs/05-implementacao-python.md)
-- [Resultados Python](docs/07-resultados-python.md)
-- [Inventory Forecasting Studio](docs/08-inventory-forecasting-studio.md)
-- [Configuração SageMaker Canvas](docs/04-configuracao-sagemaker-canvas.md)
-- [Métricas](docs/06-avaliacao-modelo.md)
-- [Limitações](docs/09-limitacoes-e-evolucoes.md)
-- [Custos AWS](docs/10-custos-aws.md)
-- [Cleanup AWS](docs/12-cleanup-aws.md)
-
----
-
-## 👤 Autor
-
-**Matheus Florindo de Deus**  
-GitHub: [`@matheusflorindo32`](https://github.com/matheusflorindo32)
-
----
-
-## 📌 Status final desta etapa
-
-**✅ Inventory Forecasting Studio open source: implementado e executado.**  
-**✅ Benchmarks e AutoGluon: resultados reais verificados.**  
-**⏳ Amazon SageMaker Canvas: documentado, mas não executado.**
+Sem Kubernetes, Kafka, feature store ou microservices antes de existir necessidade operacional mensurável.
