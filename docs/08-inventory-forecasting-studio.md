@@ -2,39 +2,87 @@
 
 ## Objetivo
 
-O `app.py` transforma a trilha Python em uma interface visual inspirada em um estúdio AutoML, sem tentar reproduzir ou se passar pelo Amazon SageMaker Canvas.
+O `app.py` transforma a trilha Python em uma interface visual de análise de forecasting. Ele **não reproduz nem se apresenta como Amazon SageMaker Canvas**.
 
-## Fluxo da aplicação
+## Fluxo atual
 
 ```text
 Dataset
   ↓
-Validação e EDA
+Validação / EDA
   ↓
-Configuração do horizonte
+Holdout interativo + rolling-origin oficial
   ↓
-Benchmarks temporais
+Benchmarks
   ↓
-Leaderboard
+AutoGluon TimeSeries
   ↓
-Forecast por SKU
+Seleção interna × desempenho externo
   ↓
-P10 / P50 / P90
+P10 / P50 / P90 + calibração
   ↓
-Download CSV
+Diagnóstico por horizonte e SKU
+  ↓
+Forecast / exports
 ```
 
-Uma aba separada apresenta a integração AutoGluon e só exibe resultados versionados se os arquivos reais existirem em `results/autogluon/`.
+## O que a interface mostra
+
+### Visão geral
+
+- arquitetura executada;
+- catálogo de modelos;
+- distinção explícita entre trilha Python e Canvas não executado.
+
+### Dados & EDA
+
+- preview do dataset;
+- preço médio;
+- estoque médio;
+- percentual promocional;
+- série temporal por SKU.
+
+### Benchmarks
+
+O usuário pode executar um holdout interativo. A interface também informa que a validação oficial do repositório utiliza três folds rolling-origin/expanding-window com testes externos não sobrepostos.
+
+### AutoGluon
+
+Se `results/validated/` estiver disponível, a aba mostra:
+
+- WAPE médio dos três folds;
+- WQL médio;
+- coverage P10–P90;
+- vitórias externas do WeightedEnsemble;
+- tabela de estabilidade;
+- calibração por horizonte;
+- diagnóstico agregado por SKU;
+- leaderboard do holdout final.
+
+A interface diferencia:
+
+- **selection stability** — estabilidade da escolha pela validação interna;
+- **external test stability** — estabilidade do desempenho nos testes externos.
+
+No experimento P1 atual, a seleção interna foi estável, mas a estabilidade externa foi classificada como `unstable`.
+
+### Forecast
+
+- seleção de modelo/SKU para os benchmarks interativos;
+- P10/P50/P90;
+- valor real do holdout;
+- download CSV;
+- aviso de que quantis produzidos não implicam calibração perfeita.
+
+---
 
 ## Executar localmente
-
-Crie um ambiente virtual e instale as dependências da aplicação:
 
 ```bash
 python -m venv .venv
 ```
 
-Linux/macOS:
+### Linux/macOS
 
 ```bash
 source .venv/bin/activate
@@ -42,7 +90,7 @@ pip install -r requirements-app.txt
 streamlit run app.py
 ```
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 .venv\Scripts\Activate.ps1
@@ -50,25 +98,24 @@ pip install -r requirements-app.txt
 streamlit run app.py
 ```
 
-## Recursos
+## Reproduzir AutoGluon P1
 
-- visão geral da arquitetura;
-- catálogo de modelos;
-- preview do dataset;
-- EDA por SKU;
-- configuração de horizonte;
-- execução de benchmarks;
-- leaderboard com MAE, RMSE, WAPE, MAPE, MASE e WQL;
-- seleção de modelo e SKU;
-- gráfico de forecast;
-- P10/P50/P90;
-- download de leaderboard e forecast;
-- status explícito dos artefatos AutoGluon.
+```bash
+pip install -r requirements-ml.txt
+python scripts/train_autogluon.py --time-limit 180 --presets medium_quality
+python scripts/train_autogluon_multifold.py --time-limit 180 --presets medium_quality
+```
 
 ## Integridade
 
-A aplicação não preenche resultados ausentes. Se os benchmarks não forem executados na sessão, mostra `não executado`. Se AutoGluon não tiver artefatos reais, a aba correspondente permanece sem leaderboard e orienta a execução do treinamento.
+A aplicação não fabrica resultados ausentes. Arquivos de evidência validados ficam em `results/validated/`; artifacts completos de execução continuam disponíveis no GitHub Actions pelo período de retenção configurado.
 
-## Deploy opcional
+O Studio é classificado como **demonstrador funcional / projeto de portfólio**, não como produto production-ready. Não possui autenticação, banco transacional, jobs persistentes, model serving ou política automática de reposição.
 
-O Streamlit Community Cloud pode executar aplicações diretamente a partir de um repositório GitHub. Para deploy, mantenha as dependências em arquivo de requirements e use a mesma versão de Python validada no ambiente de desenvolvimento.
+## Próximo nível de produto
+
+Uma evolução futura deve priorizar decisão operacional, não adicionar mais frameworks:
+
+`demanda/vendas + estoque atual + lead time → forecast → safety stock → reorder point → recomendação`
+
+Essa arquitetura futura não está implementada nesta versão.
