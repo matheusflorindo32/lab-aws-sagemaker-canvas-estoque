@@ -29,6 +29,82 @@ def autogluon_config() -> dict:
     }
 
 
+def summarize_model_stability(rows: list[dict]) -> tuple[list[dict], dict]:
+    """Separate validation-selection stability from external holdout performance.
+
+    AutoGluon loss metrics are exposed as scores where higher is better, so the
+    external winner is the row with the largest ``score_test`` in each fold.
+    """
+    if not rows:
+        raise ValueError("rows não pode estar vazio")
+
+    by_fold: dict[int, list[dict]] = defaultdict(list)
+    for row in rows:
+        by_fold[int(row["fold"])].append(row)
+
+    per_fold: list[dict] = []
+    weighted_selected = 0
+    weighted_wins = 0
+    weighted_top2 = 0
+
+    for fold in sorted(by_fold):
+        fold_rows = sorted(by_fold[fold], key=lambda row: float(row["score_test"]), reverse=True)
+        winner = fold_rows[0]
+        weighted_matches = [row for row in fold_rows if str(row["model"]) == "WeightedEnsemble"]
+        if not weighted_matches:
+            raise ValueError(f"WeightedEnsemble ausente no fold {fold}")
+        weighted = weighted_matches[0]
+        weighted_rank = next(index for index, row in enumerate(fold_rows, start=1) if row is weighted)
+        selected_rows = [row for row in fold_rows if bool(row.get("selected_by_validation"))]
+        selected_model = str(selected_rows[0]["model"]) if selected_rows else "UNKNOWN"
+
+        if selected_model == "WeightedEnsemble":
+            weighted_selected += 1
+        if weighted_rank == 1:
+            weighted_wins += 1
+        if weighted_rank <= 2:
+            weighted_top2 += 1
+
+        winner_loss = abs(float(winner["score_test"]))
+        weighted_loss = abs(float(weighted["score_test"]))
+        relative_gap = (weighted_loss - winner_loss) / winner_loss if winner_loss else 0.0
+        per_fold.append(
+            {
+                "fold": fold,
+                "selected_by_validation": selected_model,
+                "test_winner": str(winner["model"]),
+                "weighted_ensemble_test_rank": weighted_rank,
+                "weighted_ensemble_score_test": float(weighted["score_test"]),
+                "winner_score_test": float(winner["score_test"]),
+                "weighted_ensemble_relative_wql_gap_to_winner": relative_gap,
+            }
+        )
+
+    folds = len(per_fold)
+    selection_stability = "stable" if weighted_selected == folds else "partially_stable" if weighted_selected >= 2 else "unstable"
+    if folds < 3:
+        external_stability = "inconclusive"
+    elif weighted_wins == folds:
+        external_stability = "stable"
+    elif weighted_wins >= 2 and weighted_top2 == folds:
+        external_stability = "partially_stable"
+    else:
+        external_stability = "unstable"
+
+    ranks = [float(row["weighted_ensemble_test_rank"]) for row in per_fold]
+    summary = {
+        "folds": folds,
+        "weighted_ensemble_selected_by_validation_folds": weighted_selected,
+        "weighted_ensemble_external_wins": weighted_wins,
+        "weighted_ensemble_external_top2_folds": weighted_top2,
+        "weighted_ensemble_external_win_rate": weighted_wins / folds,
+        "weighted_ensemble_mean_external_rank": mean(ranks),
+        "selection_stability": selection_stability,
+        "external_test_stability": external_stability,
+    }
+    return per_fold, summary
+
+
 def summarize_prediction_rows(rows: list[dict]) -> dict[str, float]:
     if not rows:
         raise ValueError("rows não pode estar vazio")
