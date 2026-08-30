@@ -1,6 +1,10 @@
 import unittest
 
-from src.inventory_forecasting.autogluon_runner import autogluon_config, summarize_prediction_rows
+from src.inventory_forecasting.autogluon_runner import (
+    autogluon_config,
+    summarize_model_stability,
+    summarize_prediction_rows,
+)
 
 
 class AutoGluonContractTests(unittest.TestCase):
@@ -27,6 +31,28 @@ class AutoGluonContractTests(unittest.TestCase):
         self.assertIn("PINBALL_P10", summary)
         self.assertIn("CALIBRATION_P90", summary)
         self.assertIn("MACRO_MAE", summary)
+
+    def test_external_stability_is_distinct_from_validation_selection(self) -> None:
+        rows = [
+            {"fold": 1, "model": "Chronos2", "score_test": -0.33, "selected_by_validation": False},
+            {"fold": 1, "model": "WeightedEnsemble", "score_test": -0.42, "selected_by_validation": True},
+            {"fold": 1, "model": "DirectTabular", "score_test": -0.49, "selected_by_validation": False},
+            {"fold": 2, "model": "WeightedEnsemble", "score_test": -0.26, "selected_by_validation": True},
+            {"fold": 2, "model": "DirectTabular", "score_test": -0.27, "selected_by_validation": False},
+            {"fold": 2, "model": "Chronos2", "score_test": -0.31, "selected_by_validation": False},
+            {"fold": 3, "model": "WeightedEnsemble", "score_test": -0.22, "selected_by_validation": True},
+            {"fold": 3, "model": "DirectTabular", "score_test": -0.23, "selected_by_validation": False},
+            {"fold": 3, "model": "Chronos2", "score_test": -0.27, "selected_by_validation": False},
+        ]
+        per_fold, summary = summarize_model_stability(rows)
+        self.assertEqual(summary["weighted_ensemble_selected_by_validation_folds"], 3)
+        self.assertEqual(summary["weighted_ensemble_external_wins"], 2)
+        self.assertEqual(summary["weighted_ensemble_external_top2_folds"], 3)
+        self.assertEqual(summary["selection_stability"], "stable")
+        self.assertEqual(summary["external_test_stability"], "partially_stable")
+        self.assertEqual(per_fold[0]["test_winner"], "Chronos2")
+        self.assertEqual(per_fold[0]["weighted_ensemble_test_rank"], 2)
+        self.assertGreater(per_fold[0]["weighted_ensemble_relative_wql_gap_to_winner"], 0.20)
 
 
 if __name__ == "__main__":
