@@ -1,112 +1,116 @@
 # Checklist de submissão DIO — SageMaker Canvas
 
-> Baseado no README oficial do desafio `digitalinnovationone/lab-aws-sagemaker-canvas-estoque`, verificado em 30/08/2026.
+> Fonte de verdade para decidir se o repositório pode ser enviado à DIO. Rubrica reconstruída a partir do README oficial `digitalinnovationone/lab-aws-sagemaker-canvas-estoque`, revalidado em 30/08/2026.
 
-## Regra de status
+## Status permitidos
 
-- ✅ **PRONTO** = evidência já existe no repositório;
-- ⏳ **PENDENTE AWS** = só pode ser concluído com execução real no SageMaker Canvas;
-- ❌ **BLOQUEADOR** = impediria a submissão mesmo antes da execução AWS.
+- `PASS` — requisito comprovado no repositório;
+- `PENDING AWS` — depende de execução real no SageMaker Canvas;
+- `FAIL` — requisito deveria estar concluído, mas há problema local;
+- `NOT REQUIRED` — melhoria opcional/condicional, sem obrigação de execução quando não aplicável.
 
-## Matriz literal do desafio
+## Rubrica literal reconstruída
 
-| # | Requisito oficial DIO | Status | Evidência / ação |
-|---:|---|---|---|
-| 1 | Dar fork no projeto | ✅ PRONTO | repositório `matheusflorindo32/lab-aws-sagemaker-canvas-estoque` |
-| 2 | Reescrever o README | ✅ PRONTO | `README.md` totalmente reestruturado |
-| 3 | Selecionar dataset | ✅ PRONTO | `datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv` |
-| 4 | Fazer upload no SageMaker Canvas | ⏳ PENDENTE AWS | capturar `02-import-dataset.png` |
-| 5 | Importar dataset no Canvas | ⏳ PENDENTE AWS | capturar `03-dataset-preview.png` |
-| 6 | Configurar entrada/saída | ⏳ PENDENTE AWS | target `QUANTIDADE_ESTOQUE`; item `ID_PRODUTO`; timestamp `DATA_EVENTO`; capturar `04-model-configuration.png` |
-| 7 | Iniciar treinamento | ⏳ PENDENTE AWS | capturar `05-training.png` |
-| 8 | Examinar métricas de performance | ⏳ PENDENTE AWS | registrar somente métricas reais do Canvas em tabela própria |
-| 9 | Verificar características principais | ⏳ PENDENTE AWS | capturar `07-feature-importance.png` e documentar sem causalidade indevida |
-| 10 | Ajustar/re-treinar se necessário | ⏳ PENDENTE AWS | documentar decisão; não é obrigatório inventar segundo treino se o primeiro for suficiente |
-| 11 | Fazer previsão de estoque | ⏳ PENDENTE AWS | capturar `08-forecast.png` |
-| 12 | Exportar resultados | ⏳ PENDENTE AWS | salvar export real e capturar `09-export.png` |
-| 13 | Analisar previsões | ⏳ PENDENTE AWS | adicionar seção de conclusões baseada no output real |
-| 14 | Documentar conclusões/insights | ⏳ PENDENTE AWS | atualizar README após a execução |
-| 15 | Enviar URL do repositório na DIO | ⏳ ETAPA FINAL | só depois de fechar itens 4–14 |
+| ID | Categoria | Requisito DIO | Obrigatório? | Evidência esperada | Status atual | Ação restante |
+|---:|---|---|---|---|---|---|
+| 1 | explícito | Dar fork no projeto | sim | repositório derivado do Lab | PASS | — |
+| 2 | explícito | Reescrever o README | sim | `README.md` próprio | PASS | — |
+| 3 | explícito | Selecionar dataset | sim | CSV escolhido em `datasets/` | PASS | — |
+| 4 | explícito | Fazer upload/import do dataset no SageMaker Canvas | sim | `02-import-dataset.png` + `03-dataset-preview.png` | PENDING AWS | executar import real |
+| 5 | explícito | Configurar variáveis de entrada e saída | sim | `04-model-configuration.png` | PENDING AWS | registrar configuração real |
+| 6 | explícito | Iniciar treinamento do modelo | sim | `05-training.png` | PENDING AWS | executar build real |
+| 7 | explícito | Examinar métricas de performance | sim | `06-model-analysis.png` + `docs/15-resultados-canvas.md` | PENDING AWS | copiar somente métricas reais |
+| 8 | explícito | Verificar características que influenciam previsões | sim | `07-feature-importance.png` / Column impact | PENDING AWS | registrar somente output real |
+| 9 | condicional | Ajustar/re-treinar se necessário | somente se necessário | decisão documentada | PENDING AWS | decidir depois de analisar o primeiro build |
+| 10 | explícito | Fazer previsões de estoque | sim | `08-forecast.png` | PENDING AWS | gerar previsão real |
+| 11 | explícito | Exportar resultados | sim | `09-export.png` + export real quando apropriado | PENDING AWS | executar export |
+| 12 | explícito | Analisar previsões | sim | `docs/15-resultados-canvas.md` | PENDING AWS | escrever análise baseada no output real |
+| 13 | explícito | Documentar conclusões/insights | sim | README + resultados Canvas | PENDING AWS | concluir após execução |
+| 14 | explícito | Enviar URL do repositório na plataforma DIO | sim | URL final | PENDING AWS | somente após fechar itens anteriores |
+| 15 | melhoria | Extensão Python/AutoGluon | não | `results/validated/`, docs e CI | NOT REQUIRED | manter separada da trilha DIO |
 
-## Bloqueadores locais antes da AWS
+## Estado local antes da AWS
 
-**Nenhum bloqueador local conhecido no momento.**
+Não há bloqueador local conhecido para iniciar a etapa prática do Canvas.
 
-O caminho obrigatório da submissão DIO não depende de AutoGluon/Lightning. O workflow de segurança possui gate obrigatório sem vulnerabilidades ignoradas para as dependências usadas no caminho de submissão/aplicação.
+O caminho obrigatório DIO:
 
-A extensão AutoGluon continua no repositório como portfólio e é auditada separadamente; o finding `CVE-2026-58659 / PYSEC-2026-3624` permanece visível e não é mascarado.
+- não depende da stack AutoGluon/Lightning;
+- possui secret scan;
+- possui `DIO submission dependencies` com `pip-audit` sem vulnerabilidades ignoradas;
+- possui Actions oficiais pinadas por SHA;
+- possui documentação de sanitização, custo e cleanup.
 
-## Configuração Canvas preparada
+A extensão AutoGluon é opcional e possui audit separado com allowlist restrita ao finding transitivo `PYSEC-2026-3624` enquanto não existir release corrigida compatível. Qualquer finding adicional continua falhando esse job.
 
-| Campo | Valor |
+## Configuração preparada para a execução
+
+| Campo | Planejamento |
 |---|---|
 | Tipo | Time Series Forecasting |
 | Dataset | `dataset-1000-com-preco-promocional-e-renovacao-estoque.csv` |
 | Target | `QUANTIDADE_ESTOQUE` |
 | Item ID | `ID_PRODUTO` |
 | Timestamp | `DATA_EVENTO` |
-| Frequência | Daily |
-| Horizonte | 7 dias |
-| Covariáveis | `PRECO`, `FLAG_PROMOCAO` |
+| Forecast length | 7 |
+| Frequência | diária, conforme detecção/configuração real da interface |
+| Colunas adicionais | `PRECO`, `FLAG_PROMOCAO` quando o fluxo real permitir |
 
-> Se a interface atual do Canvas não permitir alguma dessas opções exatamente dessa forma, registrar a configuração realmente disponível em vez de forçar a documentação planejada.
+A interface real prevalece sobre este planejamento. Registrar o que o Canvas efetivamente disponibilizar.
 
-## Evidências obrigatórias recomendadas
+## Evidências
 
-Salvar em `assets/screenshots/` somente capturas reais e sanitizadas:
+- matriz: [`14-matriz-evidencias-dio.md`](14-matriz-evidencias-dio.md)
+- template de resultados reais: [`15-resultados-canvas.md`](15-resultados-canvas.md)
+- kit de screenshots: [`../assets/screenshots/README.md`](../assets/screenshots/README.md)
+- guia de execução: [`04-configuracao-sagemaker-canvas.md`](04-configuracao-sagemaker-canvas.md)
+- custos: [`10-custos-aws.md`](10-custos-aws.md)
+- cleanup: [`12-cleanup-aws.md`](12-cleanup-aws.md)
 
-1. `01-canvas-home.png`
-2. `02-import-dataset.png`
-3. `03-dataset-preview.png`
-4. `04-model-configuration.png`
-5. `05-training.png`
-6. `06-model-analysis.png`
-7. `07-feature-importance.png`
-8. `08-forecast.png`
-9. `09-export.png`
+## Gate automatizado
 
-Ocultar Account ID, e-mail, IAM username, ARNs sensíveis, billing, tokens, access keys e URLs assinadas.
+Execute:
 
-## Tabela para preencher depois da execução
+```bash
+python scripts/check_dio_submission.py
+```
 
-### Métricas SageMaker Canvas
+Enquanto Canvas estiver pendente, a saída correta é informativa:
 
-| Métrica mostrada pelo Canvas | Resultado real |
-|---|---|
-| WAPE | PENDENTE |
-| MAPE | PENDENTE |
-| RMSE | PENDENTE |
-| MASE | PENDENTE |
-| Average wQL / equivalente | PENDENTE |
+```text
+DIO SUBMISSION READY: NO
+```
 
-> Registrar somente as métricas que a interface realmente mostrar. Não inventar métricas ausentes.
+Depois de adicionar todas as evidências reais, use o gate estrito:
 
-### Features / variáveis relevantes
+```bash
+python scripts/check_dio_submission.py --strict
+```
 
-PENDENTE — registrar exatamente o que o Canvas mostrar.
-
-### Forecast exportado
-
-PENDENTE — registrar nome do arquivo/export e síntese dos resultados.
+O workflow `.github/workflows/dio-readiness.yml` executa a checagem em modo informativo para não deixar o CI vermelho enquanto a pendência é explicitamente a execução AWS.
 
 ## Checklist pré-envio
 
-- [ ] todos os itens AWS acima concluídos;
-- [ ] screenshots reais adicionados e sanitizados;
-- [ ] README alterado de `NÃO EXECUTADA` para `EXECUTADA` somente após evidência;
-- [ ] métricas Canvas reais documentadas;
-- [ ] feature importance real documentada;
-- [ ] forecast/export real documentado;
-- [ ] conclusões do Canvas documentadas;
-- [ ] nenhuma credencial/identificador sensível em commits ou imagens;
-- [ ] `Security scan` obrigatório verde;
-- [ ] `Dataset validation` verde;
-- [ ] revisar custos e fazer logout/cleanup do Canvas;
-- [ ] conferir o PR final;
-- [ ] somente então enviar a URL na plataforma DIO.
+- [ ] upload/import Canvas real concluído;
+- [ ] configuração Canvas real registrada;
+- [ ] build concluído;
+- [ ] métricas reais documentadas;
+- [ ] Column impact/características reais documentadas;
+- [ ] decisão sobre re-treino documentada;
+- [ ] forecast real gerado;
+- [ ] export real concluído;
+- [ ] conclusões baseadas no Canvas escritas;
+- [ ] 9 screenshots reais adicionados e sanitizados;
+- [ ] nenhum dado sensível em imagens/commits;
+- [ ] logout e cleanup revisados;
+- [ ] Billing/Cost Management revisado;
+- [ ] todos os checks do head final verdes;
+- [ ] `python scripts/check_dio_submission.py --strict` retorna sucesso;
+- [ ] PR final revisado;
+- [ ] somente então enviar a URL na DIO.
 
 ## Decisão atual
 
-**DIO: AINDA NÃO ENVIAR.**
+**DIO SUBMISSION READY: NO**
 
-Motivo único relevante: falta a evidência real do fluxo SageMaker Canvas exigido pelo README oficial da DIO. Todo o trabalho local que pode ser preparado sem executar AWS já está organizado para essa etapa.
+**Motivo:** a execução real do SageMaker Canvas e suas evidências ainda não existem. Todo o restante é preparação local para que essa seja a única pendência funcional.
