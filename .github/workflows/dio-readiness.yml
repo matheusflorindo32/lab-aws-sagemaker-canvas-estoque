@@ -1,0 +1,32 @@
+name: DIO readiness
+
+on:
+  push:
+    branches: [main, feat/professional-ml-portfolio]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node 24
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.12'
+
+      - name: Check DIO evidence readiness (informational until Canvas is executed)
+        run: |
+          python scripts/check_dio_submission.py | tee dio-readiness.txt
+          cat dio-readiness.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Explain strict final gate
+        run: |
+          echo "After real Canvas evidence is committed, run: python scripts/check_dio_submission.py --strict" >> "$GITHUB_STEP_SUMMARY"
