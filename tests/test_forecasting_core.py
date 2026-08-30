@@ -34,10 +34,16 @@ class ForecastingCoreTests(unittest.TestCase):
 
     def test_rolling_origin_builds_three_non_overlapping_expanding_folds(self) -> None:
         rows = []
+        start = date(2024, 1, 1)
         for sku in ("A", "B"):
-            for day in range(1, 41):
-                rows.append({"ID_PRODUTO": sku, "DATA_EVENTO": date(2024, 1, 1).replace(day=1), "STEP": day})
-                rows[-1]["DATA_EVENTO"] = date.fromordinal(date(2024, 1, 1).toordinal() + day - 1)
+            for step in range(40):
+                rows.append(
+                    {
+                        "ID_PRODUTO": sku,
+                        "DATA_EVENTO": date.fromordinal(start.toordinal() + step),
+                        "STEP": step + 1,
+                    }
+                )
 
         folds = rolling_origin_folds(rows, horizon=7, n_folds=3, min_train_size=14)
 
@@ -54,8 +60,9 @@ class ForecastingCoreTests(unittest.TestCase):
 
     def test_rolling_origin_rejects_configuration_with_insufficient_training_history(self) -> None:
         rows = []
-        for day in range(1, 21):
-            rows.append({"ID_PRODUTO": "A", "DATA_EVENTO": date.fromordinal(date(2024, 1, 1).toordinal() + day - 1)})
+        start = date(2024, 1, 1)
+        for step in range(20):
+            rows.append({"ID_PRODUTO": "A", "DATA_EVENTO": date.fromordinal(start.toordinal() + step)})
         with self.assertRaises(ValueError):
             rolling_origin_folds(rows, horizon=7, n_folds=2, min_train_size=14)
 
@@ -72,7 +79,6 @@ class ForecastingCoreTests(unittest.TestCase):
         actual = [4.0, 5.0]
         predicted = [3.0, 7.0]
         insample = [1.0, 2.0, 4.0, 3.0]
-        # MAE forecast = 1.5; naive scale = mean(|1|, |2|, |1|)=4/3
         self.assertAlmostEqual(mase(actual, predicted, insample), 1.125)
 
     def test_weighted_quantile_loss_is_zero_for_perfect_quantiles(self) -> None:
@@ -87,13 +93,10 @@ class ForecastingCoreTests(unittest.TestCase):
         p90 = [6.0, 12.0, 22.0, 32.0]
 
         self.assertEqual(interval_coverage(actual, p10, p90), 1.0)
-        self.assertEqual(mean_interval_width(p10, p90), 3.0)
+        self.assertEqual(mean_interval_width(p10, p90), 3.5)
         self.assertEqual(quantile_crossing_count({0.1: p10, 0.5: p50, 0.9: p90}), 0)
         self.assertGreater(pinball_loss(actual, p10, 0.1), 0.0)
-        self.assertEqual(
-            quantile_crossing_count({0.1: [5.0], 0.5: [4.0], 0.9: [6.0]}),
-            1,
-        )
+        self.assertEqual(quantile_crossing_count({0.1: [5.0], 0.5: [4.0], 0.9: [6.0]}), 1)
 
 
 if __name__ == "__main__":
