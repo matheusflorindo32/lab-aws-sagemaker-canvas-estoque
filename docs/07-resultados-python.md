@@ -1,36 +1,45 @@
 # Resultados verificados — trilha Python
 
-## Protocolo
+## Escopo e integridade
 
-Os resultados abaixo foram produzidos em GitHub Actions com Python 3.12, usando holdout temporal dos últimos 7 dias de cada SKU.
+Esta página documenta somente resultados realmente executados. A trilha SageMaker Canvas continua separada e **não executada**.
 
-- dataset: 1.000 registros;
-- SKUs: 25;
-- treino por SKU: 33 observações;
-- holdout por SKU: 7 observações;
-- observações reais de teste: 175;
+Dataset principal:
+
+`datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv`
+
+- 1.000 registros;
+- 25 SKUs;
+- 40 observações diárias por SKU;
 - horizonte: 7 dias;
-- frequência: diária.
+- target: `QUANTIDADE_ESTOQUE`;
+- covariáveis conhecidas: `PRECO`, `FLAG_PROMOCAO`.
 
-## Benchmarks leves
+> `QUANTIDADE_ESTOQUE` foi mantida para preservar o problema do desafio DIO. Forecast de estoque observado não equivale a forecast de demanda: resets/reposições são intervenções operacionais que tornam a série mais difícil de interpretar.
 
-O workflow `Python forecasting` executou três referências transparentes. Para cada modelo foram produzidas 175 previsões; o artefato contém 525 linhas no total.
+---
 
-| Rank | Modelo | MAE | RMSE | WAPE | MAPE | MASE | WQL |
-|---:|---|---:|---:|---:|---:|---:|---:|
-| 1 | Naive | 42.828571 | 50.790944 | 0.721714 | 1.261017 | 2.837697 | 0.662766 |
-| 2 | SeasonalNaive7 | 44.045714 | 48.260010 | 0.742224 | 2.417650 | 2.849374 | 0.718580 |
-| 3 | Drift | 47.422143 | 56.697834 | 0.799121 | 1.145737 | 3.164879 | 0.709079 |
+## Protocolo temporal P1
 
-O `Naive` foi o melhor baseline por WAPE, mas o erro ainda é elevado. MASE acima de 1 nos três modelos reforça que esses métodos simples não descrevem bem as descontinuidades de renovação do estoque.
+Além do holdout final 33+7, o projeto executa **3 folds externos rolling-origin/expanding-window** com testes de 7 dias não sobrepostos:
 
-## AutoGluon TimeSeries 1.6.1 — execução real
+| Fold | Treino por SKU | Teste por SKU |
+|---:|---:|---:|
+| 1 | 19 | 7 |
+| 2 | 26 | 7 |
+| 3 | 33 | 7 |
 
-O workflow `AutoGluon experiment` instalou AutoGluon TimeSeries 1.6.1 e treinou o modelo no GitHub Actions, sem GPU, com 4 CPUs.
+O AutoGluon escolhe o modelo usando somente sua validação interna. O teste externo do fold não é usado para selecionar o modelo.
 
-Configuração efetivamente usada:
+Dataset SHA-256 registrado no manifesto:
+
+`fe8ffe48cc34cd8540ecba10984066fe503b0bb5ca9d55f9280d5b1960649031`
+
+Configuração:
 
 ```text
+AutoGluon TimeSeries = 1.6.1
+Python = 3.12.14
 prediction_length = 7
 target = QUANTIDADE_ESTOQUE
 freq = D
@@ -39,114 +48,205 @@ quantile_levels = [0.1, 0.5, 0.9]
 known_covariates_names = [PRECO, FLAG_PROMOCAO]
 random_seed = 123
 presets = medium_quality
-time_limit = 180 s
+time_limit = 180 s por fold
 ```
 
-O treino utilizou 825 observações, correspondentes a 33 dias × 25 SKUs. O holdout permaneceu formado pelos 7 dias finais de cada SKU.
+---
 
-### Modelos treinados
+# Benchmarks — robustez em 3 folds
 
-- SeasonalNaive;
-- RecursiveTabular;
-- DirectTabular;
-- ETS;
-- Theta;
-- Chronos2;
-- Toto2;
-- WeightedEnsemble.
+Os baselines são `Naive`, `Drift` e `SeasonalNaive7`. O `Naive` ficou em primeiro entre os baselines nos três folds por WAPE.
 
-O AutoGluon concluiu o treinamento em aproximadamente **11,99 s** após a instalação das dependências.
+| Modelo | WAPE médio | RMSE médio | MACRO_MASE médio | WQL médio | Coverage P10–P90 |
+|---|---:|---:|---:|---:|---:|
+| **Naive** | **0.739365** | **45.785757** | **2.588005** | **0.647723** | 19.81% |
+| Drift | 0.809554 | 52.004579 | 2.853404 | 0.690580 | 23.81% |
+| SeasonalNaive7 | 0.874120 | 49.939643 | 3.010651 | 0.818905 | 1.90% |
 
-### Leaderboard de teste — WQL
+`MACRO_MASE` significa MASE calculado separadamente por SKU e depois promediado. Não é apresentado como se tivesse a mesma agregação das métricas globais.
 
-O AutoGluon representa métricas de perda com sinal invertido para obedecer à convenção interna `higher_is_better`. Na tabela abaixo é apresentada também a magnitude positiva da perda, em que **menor é melhor**.
+Os intervalos empíricos P10–P90 dos benchmarks estão severamente subcalibrados e servem somente como baseline de incerteza.
 
-| Rank | Modelo | score_test bruto | WQL loss |
-|---:|---|---:|---:|
-| 1 | WeightedEnsemble | -0.223493 | 0.223493 |
-| 2 | DirectTabular | -0.228474 | 0.228474 |
-| 3 | Chronos2 | -0.265239 | 0.265239 |
-| 4 | Toto2 | -0.283392 | 0.283392 |
-| 5 | RecursiveTabular | -0.407835 | 0.407835 |
-| 6 | SeasonalNaive | -0.416962 | 0.416962 |
-| 7 | ETS | -0.448723 | 0.448723 |
-| 8 | Theta | -0.480026 | 0.480026 |
+---
 
-O melhor modelo foi o **WeightedEnsemble**.
+# AutoGluon — resultados fold a fold
 
-Pesos registrados pelo AutoGluon:
+O modelo selecionado pela validação interna foi `WeightedEnsemble` em 3/3 folds.
 
-| Componente | Peso |
-|---|---:|
-| DirectTabular | 0.81 |
-| Toto2 | 0.12 |
-| Chronos2 | 0.05 |
-| RecursiveTabular | 0.02 |
+| Fold | Treino/SKU | Modelo selecionado | MAE | RMSE | WAPE | WQL | Coverage P10–P90 |
+|---:|---:|---|---:|---:|---:|---:|---:|
+| 1 | 19 | WeightedEnsemble | 35.209139 | 40.354636 | 0.700500 | 0.424289 | 54.29% |
+| 2 | 26 | WeightedEnsemble | 21.960458 | 28.859860 | 0.441683 | 0.262329 | 81.71% |
+| 3 | 33 | WeightedEnsemble | 21.265417 | 26.538214 | 0.358348 | 0.223493 | 65.71% |
 
-### Métricas independentes do melhor modelo
+### Agregado dos três folds
 
-As 175 previsões exportadas pelo `WeightedEnsemble` foram reconciliadas com os valores reais do mesmo holdout. As métricas abaixo foram recalculadas independentemente a partir do arquivo de previsões:
+| Métrica | Média | Mediana | Desvio-padrão |
+|---|---:|---:|---:|
+| MAE | 26.145005 | 21.960458 | 7.857459 |
+| RMSE | 31.917570 | 28.859860 | 7.398349 |
+| WAPE | 0.500177 | 0.441683 | 0.178418 |
+| WQL | 0.303370 | 0.262329 | 0.106504 |
+| Coverage P10–P90 | 67.24% | 65.71% | 13.78 p.p. |
 
-| Métrica | Resultado |
-|---|---:|
-| MAE | 21.265417 |
-| RMSE | 26.538214 |
-| WAPE | 0.358348 |
-| MAPE | 1.472072 |
-| WQL | 0.223493 |
+---
 
-A reprodução independente do WQL resultou em `0.22349288237753498`, consistente com a magnitude do score bruto `-0.22349288237753495` retornado por `predictor.evaluate()`.
+## Seleção interna ≠ estabilidade externa
 
-### Comparação com o melhor baseline
+A análise P1 separa duas perguntas diferentes:
 
-| Métrica | Naive | AutoGluon WeightedEnsemble |
+1. **Qual modelo a validação interna escolhe?**
+2. **Qual modelo realmente vence o teste externo de cada fold?**
+
+| Fold | Selecionado pela validação | Vencedor externo por WQL | Rank externo do WeightedEnsemble | Gap do ensemble para o vencedor |
+|---:|---|---|---:|---:|
+| 1 | WeightedEnsemble | **Chronos2** | 3 | **27.16% pior em WQL** |
+| 2 | WeightedEnsemble | **WeightedEnsemble** | 1 | 0% |
+| 3 | WeightedEnsemble | **WeightedEnsemble** | 1 | 0% |
+
+Conclusão:
+
+- `selection_stability = stable`: o WeightedEnsemble foi selecionado internamente em 3/3 folds;
+- `external_test_stability = unstable`: venceu 2/3 testes externos, mas caiu para terceiro no fold 1 com degradação material.
+
+Logo, **não é defensável afirmar que o WeightedEnsemble é universalmente o melhor modelo**. A evidência correta é que ele performou melhor em dois dos três testes externos e apresentou sensibilidade relevante à janela com apenas 40 pontos por série.
+
+---
+
+# AutoGluon × melhor baseline
+
+Comparando as médias dos mesmos três folds com o `Naive`:
+
+| Métrica | Naive | AutoGluon selecionado | Redução relativa |
+|---|---:|---:|---:|
+| WAPE | 0.739365 | **0.500177** | **32.35%** |
+| RMSE | 45.785757 | **31.917570** | **30.29%** |
+| WQL | 0.647723 | **0.303370** | **53.16%** |
+
+A melhora agregada é substancial neste dataset, mas a variabilidade entre folds impede tratar esse ganho como evidência de produção.
+
+---
+
+# P10 / P50 / P90 — calibração
+
+As previsões AutoGluon possuem quantis nativos. O P1 mediu se esses quantis se comportam como esperado.
+
+### Agregado dos três folds
+
+| Diagnóstico | Observado | Referência nominal |
 |---|---:|---:|
-| MAE | 42.828571 | 21.265417 |
-| RMSE | 50.790944 | 26.538214 |
-| WAPE | 0.721714 | 0.358348 |
-| WQL | 0.662766 | 0.223493 |
+| `y <= P10` | 20.95% | ~10% |
+| `y <= P50` | 51.05% | ~50% |
+| `y <= P90` | 88.19% | ~90% |
+| Coverage P10–P90 | **67.24%** | ~80% |
+| Largura média P10–P90 | 68.52 | — |
+| Quantile crossings | **0** | 0 desejável |
 
-No holdout utilizado, o AutoGluon apresentou redução substancial do erro em relação ao melhor baseline simples. Isso é evidência válida **apenas para este dataset e este protocolo de backtest**; não implica desempenho de produção nem generalização para outros períodos.
+P50 e P90 ficaram relativamente próximos das frequências nominais no agregado, mas P10 ficou alto e o intervalo P10–P90 cobriu somente 67,24% dos valores reais. Portanto, os quantis são úteis para representar incerteza, porém **não estão perfeitamente calibrados**.
 
-## Feature importance das covariáveis
+### Coverage por horizonte
 
-O AutoGluon calculou:
+| h | Coverage | WAPE | WQL | Largura média |
+|---:|---:|---:|---:|---:|
+| 1 | 61.33% | 0.4685 | 0.2991 | 61.03 |
+| 2 | 58.67% | 0.5905 | 0.3610 | 64.99 |
+| 3 | 61.33% | 0.5460 | 0.3289 | 69.91 |
+| 4 | 69.33% | 0.4934 | 0.2973 | 68.48 |
+| 5 | 73.33% | 0.4451 | 0.2672 | 70.87 |
+| 6 | 77.33% | 0.4010 | 0.2481 | 72.72 |
+| 7 | 69.33% | 0.5273 | 0.3061 | 71.67 |
+
+A largura tende a aumentar nos horizontes mais distantes, mas o coverage não piora monotonicamente. Com somente 75 observações por passo de horizonte, essa análise é **exploratória**.
+
+---
+
+# Diagnóstico por SKU
+
+Usando MAE médio dos três folds:
+
+### Cinco mais previsíveis
+
+| SKU | MAE médio | WAPE médio | MACRO_MASE médio | Coverage |
+|---|---:|---:|---:|---:|
+| 1011 | **16.0186** | 0.2954 | 0.8914 | 95.24% |
+| 1013 | 19.7747 | 0.3405 | 1.2209 | 80.95% |
+| 1005 | 20.8032 | 0.3843 | 1.1781 | 90.48% |
+| 1022 | 20.9321 | 0.4100 | 1.2887 | 80.95% |
+| 1024 | 21.1586 | 0.3709 | 1.1897 | 71.43% |
+
+### Cinco menos previsíveis
+
+| SKU | MAE médio | WAPE médio | MACRO_MASE médio | Coverage |
+|---|---:|---:|---:|---:|
+| 1006 | **33.2197** | 0.9832 | 2.6026 | 38.10% |
+| 1008 | 32.3849 | 0.9017 | 2.6394 | 61.90% |
+| 1004 | 30.9993 | 0.4982 | 1.8851 | 42.86% |
+| 1002 | 29.6194 | 1.0024 | 2.0344 | 57.14% |
+| 1015 | 29.1400 | 0.6870 | 2.0056 | 57.14% |
+
+Essas diferenças são descritivas. O dataset é pequeno demais para concluir causalidade entre dificuldade de previsão e preço, promoção ou resets.
+
+---
+
+# Holdout final e feature importance
+
+No fold final (33+7), o leaderboard de teste continua:
+
+| Rank | Modelo | WQL loss |
+|---:|---|---:|
+| 1 | WeightedEnsemble | **0.223493** |
+| 2 | DirectTabular | 0.228474 |
+| 3 | Chronos2 | 0.265239 |
+| 4 | Toto2 | 0.283392 |
+| 5 | RecursiveTabular | 0.407835 |
+| 6 | SeasonalNaive | 0.416962 |
+| 7 | ETS | 0.448723 |
+| 8 | Theta | 0.480026 |
+
+Feature importance no holdout final:
 
 | Variável | Importance |
 |---|---:|
 | `PRECO` | 0.000169 |
 | `FLAG_PROMOCAO` | -0.000625 |
 
-Os valores estão muito próximos de zero. Portanto, nesta execução, não há evidência de que essas duas covariáveis tenham contribuído materialmente para o desempenho do ensemble. Importância negativa de `FLAG_PROMOCAO` não deve ser interpretada como causalidade; indica apenas que, no procedimento de permutação/avaliação utilizado, sua presença não melhorou o score observado.
+Ambas ficaram próximas de zero; não há interpretação causal.
 
-## P10 / P50 / P90
+---
 
-O AutoGluon produziu quantis probabilísticos nativos `0.1`, `0.5` e `0.9` para cada um dos 175 pontos do holdout.
+# Evidências permanentes
 
-Nos benchmarks leves, P10/P50/P90 continuam sendo intervalos empíricos baseados nas inovações históricas e **não** devem ser confundidos com os quantis nativos do AutoGluon.
+Resultados pequenos e auditáveis estão em [`../results/validated/`](../results/validated/):
 
-## Artefatos
+- `autogluon_multifold_metrics.csv`;
+- `autogluon_multifold_summary.csv`;
+- `model_stability.csv`;
+- `horizon_calibration.csv`;
+- `sku_metrics.csv`;
+- `autogluon_multifold_manifest.json`;
+- `benchmark_multifold_summary.csv`.
 
-Versionados:
+O manifesto registra o hash do dataset e a proveniência do workflow/artifact. As previsões completas continuam regeneráveis pelo script e preservadas no artifact de Actions; modelos/checkpoints não são versionados.
 
-- `results/metrics/benchmark_metrics.csv`;
-- `results/exports/benchmark_leaderboard.csv`;
-- `results/autogluon/leaderboard.csv`;
-- `results/autogluon/evaluation.txt`;
-- `results/autogluon/feature_importance.csv`;
-- `results/autogluon/metrics_summary.csv`.
+### Reprodução
 
-Preservados como artefatos do GitHub Actions:
+```bash
+pip install -r requirements-ml.txt
+python scripts/train_autogluon.py --time-limit 180 --presets medium_quality
+python scripts/train_autogluon_multifold.py --time-limit 180 --presets medium_quality
+```
 
-- `inventory-forecasting-benchmarks` — previsões completas dos três benchmarks;
-- `inventory-forecasting-autogluon` — leaderboard, 175 previsões com mean/P10/P50/P90, avaliação e feature importance.
+---
 
-## Limitações
+# Limitações que permanecem
 
-- apenas 40 observações por SKU;
-- somente um holdout de 7 dias;
+- somente 40 observações por SKU;
+- primeiro fold possui somente 19 observações de treino;
+- três folds são melhores que um holdout único, mas ainda constituem pouca evidência temporal;
 - dados educacionais/sintéticos;
-- forte presença de resets de estoque;
+- resets/reposições misturam dinâmica de estoque com decisões operacionais;
 - ausência de demanda/vendas explícitas;
-- covariáveis futuras de preço/promoção precisam ser fornecidas explicitamente em uma previsão genuinamente futura;
-- o modelo não deve ser tratado como política automática de reposição.
+- preço e promoção precisam ser realmente conhecidos no horizonte futuro para uso como `known_covariates`;
+- quantis apresentam subcoverage;
+- estabilidade externa do ensemble é limitada;
+- o sistema não é política automática de reposição nem produto production-ready.
