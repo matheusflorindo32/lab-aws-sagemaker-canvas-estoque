@@ -15,7 +15,7 @@ A submissão DIO **não depende da stack AutoGluon/Lightning** para executar o f
 
 O gate obrigatório `DIO submission dependencies` executa `pip-audit` em `requirements-app.txt` **sem ignorar vulnerabilidades**. O secret scanner também é obrigatório.
 
-Isso significa que a vulnerabilidade transitiva de Lightning descrita abaixo **não faz parte do caminho obrigatório usado para a submissão DIO**.
+Assim, a vulnerabilidade transitiva de Lightning descrita abaixo **não faz parte do caminho obrigatório usado para a submissão DIO**.
 
 ## Extensão opcional AutoGluon
 
@@ -28,7 +28,7 @@ Isso significa que a vulnerabilidade transitiva de Lightning descrita abaixo **n
 - gerar e exportar previsões do Canvas;
 - enviar o repositório na plataforma DIO.
 
-A stack ML opcional continua auditada separadamente pelo job `Optional AutoGluon dependency advisory`, sem suprimir findings do scanner.
+A stack ML opcional continua auditada separadamente. Existe uma única allowlist temporária e explícita para `PYSEC-2026-3624`; qualquer outra vulnerabilidade encontrada por `pip-audit` continua fazendo o job falhar.
 
 ## Finding conhecido — CVE-2026-58659 / PYSEC-2026-3624
 
@@ -43,14 +43,15 @@ No projeto atual:
 - o fluxo DIO não importa Lightning;
 - a dependência aparece somente na extensão opcional AutoGluon.
 
-Portanto, o risco **não é declarado como corrigido upstream**. Ele é **isolado do caminho obrigatório de submissão DIO** e permanece visível no audit da extensão opcional.
+Portanto, o risco **não é declarado como corrigido upstream**. Ele é isolado do caminho obrigatório de submissão DIO e permanece documentado na trilha opcional.
 
 ### Regra até existir release corrigida
 
 - não carregar checkpoints arbitrários/não confiáveis;
 - não transformar a extensão AutoGluon em serviço público que aceite modelos/checkpoints externos;
 - manter o audit da stack opcional ativo;
-- remover esta seção quando uma versão corrigida compatível for publicada e validada pelo CI.
+- manter a allowlist restrita ao identificador exato `PYSEC-2026-3624`;
+- remover a allowlist quando uma versão corrigida compatível for publicada e validada pelo CI.
 
 ## Segredos que nunca devem ser versionados
 
