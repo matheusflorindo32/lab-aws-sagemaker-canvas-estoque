@@ -7,7 +7,9 @@ on:
       - '.github/workflows/autogluon-experiment.yml'
       - 'requirements-ml.txt'
       - 'scripts/train_autogluon.py'
+      - 'scripts/train_autogluon_multifold.py'
       - 'src/inventory_forecasting/autogluon_runner.py'
+      - 'src/inventory_forecasting/metrics.py'
       - 'datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv'
   workflow_dispatch:
 
@@ -17,34 +19,41 @@ permissions:
 jobs:
   autogluon:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ml.txt
 
-      - name: Install AutoGluon TimeSeries
-        run: pip install -r requirements-ml.txt
-
-      - name: Train and evaluate AutoGluon
+      - name: Run final holdout
         run: python scripts/train_autogluon.py --time-limit 180 --presets medium_quality
 
-      - name: Verify AutoGluon artifacts
+      - name: Run rolling-origin experiment
+        run: python scripts/train_autogluon_multifold.py --time-limit 180 --presets medium_quality
+
+      - name: Verify outputs
         run: |
           test -s results/autogluon/leaderboard.csv
           test -s results/autogluon/holdout_predictions.csv
-          test -s results/autogluon/evaluation.txt
-          test -s results/autogluon/feature_importance.csv
+          test -s results/autogluon/metrics_summary.csv
+          test -s results/autogluon/calibration_by_sku.csv
+          test -s results/autogluon/experiment_manifest.json
+          test -s results/autogluon/multifold_leaderboard.csv
+          test -s results/autogluon/multifold_metrics.csv
+          test -s results/autogluon/multifold_predictions.csv
+          test -s results/autogluon/multifold_summary.csv
 
-      - name: Upload AutoGluon evaluation artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: inventory-forecasting-autogluon
           path: results/autogluon/
