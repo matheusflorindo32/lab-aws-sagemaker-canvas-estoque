@@ -45,12 +45,12 @@ tab_overview, tab_data, tab_bench, tab_auto, tab_forecast = st.tabs(
 with tab_overview:
     st.subheader("Arquitetura executada")
     st.markdown(
-        "Dataset → validação → validação temporal → benchmarks → métricas → "
-        "AutoGluon opcional → leaderboard → forecast probabilístico → export"
+        "Dataset → validação → rolling-origin → benchmarks → métricas → "
+        "AutoGluon → estabilidade/calibração → forecast probabilístico → export"
     )
     st.info(
-        "O SageMaker Canvas permanece documentado como trilha original da DIO. "
-        "Esta aplicação representa a trilha open source realmente executável no repositório."
+        "O SageMaker Canvas permanece documentado como trilha original da DIO e ainda não foi executado. "
+        "Esta aplicação representa a trilha open source realmente executada no repositório."
     )
     st.dataframe(pd.DataFrame(studio_model_catalog()), use_container_width=True, hide_index=True)
 
@@ -73,7 +73,7 @@ if "leaderboard" not in st.session_state:
 with tab_bench:
     st.subheader("Backtest temporal")
     st.write(f"Os últimos **{horizon} dias por SKU** formam o holdout interativo; nenhuma linha futura entra no treino.")
-    st.caption("A validação oficial do repositório também executa 3 folds rolling-origin/expanding-window para avaliar estabilidade temporal.")
+    st.caption("A validação oficial do repositório executa 3 folds rolling-origin/expanding-window com testes externos não sobrepostos.")
     if st.button("Executar benchmarks", type="primary"):
         leaderboard, predictions = run_benchmarks(rows, horizon=int(horizon))
         st.session_state.leaderboard = leaderboard
@@ -101,19 +101,53 @@ with tab_auto:
     st.metric("Status de artefatos versionados", auto_status)
     st.code(
         "pip install -r requirements-ml.txt\n"
-        "python scripts/train_autogluon.py --time-limit 300 --presets medium_quality",
+        "python scripts/train_autogluon.py --time-limit 180 --presets medium_quality\n"
+        "python scripts/train_autogluon_multifold.py --time-limit 180 --presets medium_quality",
         language="bash",
     )
     st.markdown(
         "Configuração: `prediction_length=7`, `freq='D'`, `eval_metric='WQL'`, "
         "quantis `0.1/0.5/0.9`, covariáveis conhecidas `PRECO` e `FLAG_PROMOCAO`."
     )
-    st.warning(
-        "Resultados AutoGluon só aparecem aqui depois de uma execução real. "
-        "O Studio nunca gera valores simulados para preencher esta seção."
-    )
+
+    validated = Path("results/validated")
+    summary_path = validated / "autogluon_multifold_summary.csv"
+    stability_path = validated / "model_stability.csv"
+    horizon_path = validated / "horizon_calibration.csv"
+    sku_path = validated / "sku_metrics.csv"
+
+    if summary_path.exists() and stability_path.exists():
+        summary = pd.read_csv(summary_path).iloc[0]
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("WAPE médio — 3 folds", f'{summary["WAPE_mean"]:.3f}')
+        c2.metric("WQL médio — 3 folds", f'{summary["WQL_mean"]:.3f}')
+        c3.metric("Coverage P10–P90", f'{summary["P10_P90_COVERAGE_mean"] * 100:.1f}%')
+        c4.metric("Vitórias externas ensemble", f'{int(summary["weighted_ensemble_external_wins"])}/3')
+        st.info(
+            "Seleção pela validação interna: estável (WeightedEnsemble em 3/3 folds). "
+            f"Estabilidade no teste externo: {summary['external_test_stability']}. "
+            "Seleção interna e desempenho externo são evidências diferentes."
+        )
+        st.dataframe(pd.read_csv(stability_path), use_container_width=True, hide_index=True)
+
+        if horizon_path.exists():
+            st.markdown("#### Calibração por horizonte — análise exploratória")
+            horizon_df = pd.read_csv(horizon_path)
+            st.dataframe(
+                horizon_df[["horizon_step", "WAPE", "WQL", "P10_P90_COVERAGE", "MEAN_INTERVAL_WIDTH"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+        if sku_path.exists():
+            st.markdown("#### Diagnóstico por SKU")
+            sku_df = pd.read_csv(sku_path)
+            st.dataframe(sku_df, use_container_width=True, hide_index=True)
+    else:
+        st.warning("Resultados P1 validados ainda não estão disponíveis neste checkout.")
+
     auto_leaderboard = Path("results/autogluon/leaderboard.csv")
     if auto_leaderboard.exists():
+        st.markdown("#### Leaderboard do holdout final")
         st.dataframe(pd.read_csv(auto_leaderboard), use_container_width=True, hide_index=True)
 
 with tab_forecast:
@@ -137,7 +171,7 @@ with tab_forecast:
         st.dataframe(view, use_container_width=True, hide_index=True)
         st.caption(
             "Nos benchmarks leves, P10/P50/P90 são derivados empiricamente das inovações históricas. "
-            "AutoGluon, quando executado, produz quantis probabilísticos nativos do modelo."
+            "AutoGluon produz quantis nativos, mas o coverage observado precisa ser analisado: quantil produzido não implica calibração perfeita."
         )
         st.download_button(
             "Baixar forecast CSV",
