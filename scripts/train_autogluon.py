@@ -6,6 +6,7 @@ import json
 import platform
 import sys
 from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -90,13 +91,12 @@ def main() -> None:
         for key, value in evaluation.items():
             handle.write(f"{key}={value}\n")
 
-    import autogluon
     manifest = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "dataset": str(DATASET),
         "dataset_sha256": sha256_file(DATASET),
         "python": platform.python_version(),
-        "autogluon": autogluon.__version__,
+        "autogluon_timeseries": version("autogluon.timeseries"),
         "presets": args.presets,
         "time_limit_seconds": args.time_limit,
         "config": result["config"],
