@@ -50,7 +50,12 @@ jobs:
           test -s results/autogluon/multifold_leaderboard.csv
           test -s results/autogluon/multifold_metrics.csv
           test -s results/autogluon/multifold_predictions.csv
+          test -s results/autogluon/multifold_calibration_by_sku.csv
           test -s results/autogluon/multifold_summary.csv
+          test -s results/autogluon/multifold_manifest.json
+          test -s results/autogluon/model_stability.csv
+          test -s results/autogluon/sku_metrics.csv
+          test -s results/autogluon/horizon_calibration.csv
 
       - name: Upload artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
