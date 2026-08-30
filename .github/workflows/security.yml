@@ -43,4 +43,7 @@ jobs:
         run: python -m pip_audit -r requirements-app.txt
 
       - name: Audit ML dependencies
-        run: python -m pip_audit -r requirements-ml.txt
+        # Temporary, documented exception: no patched PyPI release exists as of 2026-08-30.
+        # See SECURITY.md. Remove this exact ignore when a compatible fix is released
+        # or if untrusted checkpoint loading becomes reachable in this project.
+        run: python -m pip_audit -r requirements-ml.txt --ignore-vuln PYSEC-2026-3624
