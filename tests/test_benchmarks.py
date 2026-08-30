@@ -1,6 +1,8 @@
 import unittest
+from datetime import date
 
 from src.inventory_forecasting.baselines import drift_forecast, naive_forecast, seasonal_naive_forecast
+from src.inventory_forecasting.benchmark import run_benchmarks_multifold
 
 
 class BaselineTests(unittest.TestCase):
@@ -13,6 +15,30 @@ class BaselineTests(unittest.TestCase):
 
     def test_drift_extends_line_from_first_to_last(self) -> None:
         self.assertEqual(drift_forecast([1, 2, 3], horizon=3), [4.0, 5.0, 6.0])
+
+    def test_multifold_benchmark_reports_fold_metrics_summary_and_predictions(self) -> None:
+        rows = []
+        start = date(2024, 1, 1)
+        for sku_index, sku in enumerate(("A", "B")):
+            for step in range(40):
+                rows.append(
+                    {
+                        "ID_PRODUTO": sku,
+                        "DATA_EVENTO": date.fromordinal(start.toordinal() + step),
+                        "PRECO": 10.0 + sku_index,
+                        "FLAG_PROMOCAO": step % 5 == 0,
+                        "QUANTIDADE_ESTOQUE": float(100 - ((step + sku_index) % 20)),
+                    }
+                )
+
+        fold_metrics, summary, predictions = run_benchmarks_multifold(rows, horizon=7, n_folds=3, min_train_size=14)
+
+        self.assertEqual(len(fold_metrics), 3 * 3)
+        self.assertEqual(len(summary), 3)
+        self.assertEqual(len(predictions), 3 * 3 * 2 * 7)
+        self.assertTrue(all("fold" in row for row in fold_metrics))
+        self.assertTrue(all("MACRO_MASE" in row for row in fold_metrics))
+        self.assertTrue(all("WAPE_mean" in row and "WAPE_median" in row and "WAPE_stdev" in row for row in summary))
 
 
 if __name__ == "__main__":
