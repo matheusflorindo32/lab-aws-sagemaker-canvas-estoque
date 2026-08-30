@@ -21,15 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
 
       - name: Compile forecasting code
-        run: python -m py_compile src/inventory_forecasting/*.py scripts/run_benchmarks.py scripts/train_autogluon.py app.py
+        run: python -m py_compile src/inventory_forecasting/*.py scripts/run_benchmarks.py scripts/train_autogluon.py scripts/train_autogluon_multifold.py app.py
 
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
@@ -37,36 +37,30 @@ jobs:
       - name: Validate source dataset
         run: python scripts/validate_dataset.py
 
-      - name: Execute real benchmark backtest
+      - name: Execute real benchmark backtests
         run: python scripts/run_benchmarks.py
 
       - name: Verify generated artifacts
         run: |
-          python - <<'PY'
-          import csv
-          from pathlib import Path
-
-          metrics = Path('results/metrics/benchmark_metrics.csv')
-          predictions = Path('results/predictions/benchmark_holdout_predictions.csv')
-          leaderboard = Path('results/exports/benchmark_leaderboard.csv')
-          for path in (metrics, predictions, leaderboard):
-              if not path.exists() or path.stat().st_size == 0:
-                  raise SystemExit(f'Missing artifact: {path}')
-          with predictions.open(encoding='utf-8', newline='') as handle:
-              rows = list(csv.DictReader(handle))
-          expected = 25 * 7 * 3
-          if len(rows) != expected:
-              raise SystemExit(f'Unexpected prediction row count: {len(rows)} != {expected}')
-          print(f'[OK] {len(rows)} benchmark prediction rows verified.')
-          PY
+          test -s results/metrics/benchmark_metrics.csv
+          test -s results/metrics/benchmark_multifold_metrics.csv
+          test -s results/metrics/benchmark_multifold_summary.csv
+          test -s results/predictions/benchmark_holdout_predictions.csv
+          test -s results/predictions/benchmark_multifold_predictions.csv
+          test -s results/exports/benchmark_leaderboard.csv
+          test "$(($(wc -l < results/predictions/benchmark_holdout_predictions.csv) - 1))" -eq 525
+          test "$(($(wc -l < results/predictions/benchmark_multifold_predictions.csv) - 1))" -eq 1575
 
       - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: inventory-forecasting-benchmarks
           path: |
             results/metrics/benchmark_metrics.csv
+            results/metrics/benchmark_multifold_metrics.csv
+            results/metrics/benchmark_multifold_summary.csv
             results/predictions/benchmark_holdout_predictions.csv
+            results/predictions/benchmark_multifold_predictions.csv
             results/exports/benchmark_leaderboard.csv
           if-no-files-found: error
           retention-days: 30
