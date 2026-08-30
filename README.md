@@ -1,55 +1,62 @@
 # 📊 Previsão de Estoque Inteligente — AWS SageMaker Canvas
 
-> Desafio de projeto da DIO com uma extensão open source adicional em Python/AutoGluon.
+> Desafio de projeto da DIO com uma extensão open source adicional e claramente separada em Python/AutoGluon.
 
 [![DIO](https://img.shields.io/badge/DIO-Project%20Lab-6C63FF)](https://www.dio.me/)
 [![Dataset validation](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/dataset-validation.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/dataset-validation.yml)
 [![Security](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml/badge.svg?branch=feat/professional-ml-portfolio)](https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque/actions/workflows/security.yml)
 
-## 🎯 Objetivo
+# 🎯 Projeto DIO — SageMaker Canvas
 
 Este repositório parte do desafio oficial **“Previsão de Estoque Inteligente na AWS com SageMaker Canvas”** da Digital Innovation One.
 
-O objetivo da trilha DIO é:
+A trilha obrigatória do desafio é:
 
 1. selecionar um dataset;
-2. importar o dataset no Amazon SageMaker Canvas;
-3. configurar as variáveis de entrada/saída;
+2. fazer upload/import no Amazon SageMaker Canvas;
+3. configurar variáveis de entrada e saída;
 4. treinar um modelo de forecasting;
-5. analisar métricas e principais características;
+5. analisar métricas e características que influenciam as previsões;
 6. gerar previsões de estoque;
 7. exportar os resultados;
-8. documentar conclusões e insights.
+8. documentar conclusões e insights;
+9. enviar a URL deste repositório na plataforma DIO.
 
-Além da trilha original, o repositório contém uma extensão opcional e já executada em Python para aprofundar forecasting, validação temporal e reprodutibilidade.
+A extensão Python/AutoGluon existente neste repositório é **opcional e adicional**. Ela não substitui nenhuma etapa do SageMaker Canvas.
 
 ---
 
-# ✅ Status do desafio DIO
+# ✅ Status DIO
+
+**DIO SUBMISSION READY: NO**
 
 | Etapa | Status |
 |---|---|
-| Fork do projeto | ✅ concluído |
-| README reescrito | ✅ concluído |
-| Dataset selecionado e validado | ✅ concluído |
-| Upload/import no SageMaker Canvas | ⏳ pendente execução AWS |
-| Configuração do modelo Canvas | ⏳ pendente execução AWS |
-| Treinamento Canvas | ⏳ pendente execução AWS |
-| Métricas/feature importance Canvas | ⏳ pendente execução AWS |
-| Forecast Canvas | ⏳ pendente execução AWS |
-| Export Canvas | ⏳ pendente execução AWS |
-| Conclusões da execução Canvas | ⏳ pendente execução AWS |
+| Fork do projeto | ✅ PASS |
+| README reescrito | ✅ PASS |
+| Dataset selecionado e validado | ✅ PASS |
+| Upload/import no SageMaker Canvas | ⏳ PENDING AWS |
+| Configuração real do modelo Canvas | ⏳ PENDING AWS |
+| Treinamento Canvas | ⏳ PENDING AWS |
+| Métricas/Column impact Canvas | ⏳ PENDING AWS |
+| Forecast Canvas | ⏳ PENDING AWS |
+| Export Canvas | ⏳ PENDING AWS |
+| Conclusões da execução Canvas | ⏳ PENDING AWS |
 | Envio da URL na DIO | ⏳ etapa final |
 
-> **Nenhum resultado Python é apresentado como se fosse resultado do SageMaker Canvas.**
+> **Nenhum resultado Python é apresentado como resultado do SageMaker Canvas.**
 
-Checklist literal e evidências esperadas: [`docs/13-checklist-submissao-dio.md`](docs/13-checklist-submissao-dio.md).
+Fontes de verdade para a entrega:
+
+- checklist literal: [`docs/13-checklist-submissao-dio.md`](docs/13-checklist-submissao-dio.md)
+- matriz de evidências: [`docs/14-matriz-evidencias-dio.md`](docs/14-matriz-evidencias-dio.md)
+- template para resultados reais Canvas: [`docs/15-resultados-canvas.md`](docs/15-resultados-canvas.md)
+- kit de screenshots: [`assets/screenshots/README.md`](assets/screenshots/README.md)
+- guia Canvas passo a passo: [`docs/04-configuracao-sagemaker-canvas.md`](docs/04-configuracao-sagemaker-canvas.md)
 
 ---
 
 # 📁 Dataset escolhido
-
-Arquivo:
 
 ```text
 datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
@@ -72,37 +79,41 @@ Validação automatizada:
 
 Campos:
 
-| Campo | Papel |
+| Campo | Papel planejado |
 |---|---|
-| `ID_PRODUTO` | identificador do item/SKU |
+| `ID_PRODUTO` | Item ID |
 | `DATA_EVENTO` | timestamp |
-| `PRECO` | covariável |
-| `FLAG_PROMOCAO` | covariável |
+| `PRECO` | coluna adicional/covariável quando suportada pelo fluxo real |
+| `FLAG_PROMOCAO` | coluna adicional/covariável quando suportada pelo fluxo real |
 | `QUANTIDADE_ESTOQUE` | target |
 
 ---
 
-# ☁️ Configuração planejada no SageMaker Canvas
+# ☁️ Configuração preparada para o SageMaker Canvas
 
-| Parâmetro | Configuração |
+| Parâmetro | Planejamento |
 |---|---|
 | Tipo | Time Series Forecasting |
 | Target | `QUANTIDADE_ESTOQUE` |
 | Item ID | `ID_PRODUTO` |
 | Timestamp | `DATA_EVENTO` |
-| Frequência | Daily |
-| Horizonte | 7 dias |
-| Covariáveis | `PRECO`, `FLAG_PROMOCAO` |
+| Forecast length | 7 |
+| Frequência | diária, conforme detecção/configuração real |
+| Colunas adicionais | `PRECO`, `FLAG_PROMOCAO` quando disponíveis no fluxo real |
 
-Guia passo a passo: [`docs/04-configuracao-sagemaker-canvas.md`](docs/04-configuracao-sagemaker-canvas.md).
+A interface real do Canvas prevalece sobre este planejamento. Na execução, o projeto registrará exatamente as opções realmente usadas.
 
-> A configuração acima é o plano preparado. Na execução real, deve-se registrar exatamente as opções que a interface atual do Canvas disponibilizar.
+**AWS EXECUTION AUTHORIZED = NO**
+
+Nenhum build/prediction pago deve ser iniciado sem autorização explícita e teto financeiro definido.
+
+Guia operacional: [`docs/04-configuracao-sagemaker-canvas.md`](docs/04-configuracao-sagemaker-canvas.md).
 
 ---
 
-# 📸 Evidências que serão adicionadas após a execução AWS
+# 📸 Evidências Canvas pendentes
 
-Somente screenshots reais e sanitizados serão versionados em `assets/screenshots/`:
+Após a execução real, somente screenshots reais e sanitizados serão adicionados:
 
 1. `01-canvas-home.png`
 2. `02-import-dataset.png`
@@ -114,23 +125,48 @@ Somente screenshots reais e sanitizados serão versionados em `assets/screenshot
 8. `08-forecast.png`
 9. `09-export.png`
 
-Não serão publicados Account ID, e-mail, IAM username, ARNs sensíveis, tokens, access keys ou dados pessoais de billing.
+Não publicar Account ID, e-mail, IAM username, access keys, session tokens, ARNs sensíveis, billing pessoal ou URLs assinadas.
 
 ---
 
-# 🐍 Extensão opcional — Inventory Forecasting Studio
+# 🔎 Gate automático de submissão
 
-A extensão Python não substitui a execução exigida pela DIO. Ela demonstra uma abordagem reproduzível do mesmo problema com:
+O repositório possui um checker local:
 
-- benchmarks `Naive`, `Drift` e `SeasonalNaive7`;
+```bash
+python scripts/check_dio_submission.py
+```
+
+Enquanto o Canvas não estiver executado, a saída esperada é:
+
+```text
+DIO SUBMISSION READY: NO
+```
+
+Depois de inserir todas as evidências reais:
+
+```bash
+python scripts/check_dio_submission.py --strict
+```
+
+O modo estrito só deve retornar sucesso quando checklist, resultados e nove screenshots reais estiverem completos.
+
+O workflow `DIO readiness` executa a verificação em modo informativo enquanto a pendência AWS é explícita, evitando deixar o CI vermelho apenas porque o Canvas ainda não foi autorizado/executado.
+
+---
+
+# 🐍 Extensão open source opcional — Inventory Forecasting Studio
+
+A extensão Python não substitui o desafio DIO. Ela demonstra uma abordagem reproduzível do mesmo problema com:
+
+- `Naive`, `Drift` e `SeasonalNaive7`;
 - AutoGluon TimeSeries 1.6.1;
 - 3 folds rolling-origin/expanding-window;
 - MAE, RMSE, WAPE, MAPE, WQL e `MACRO_MASE`;
-- P10/P50/P90;
-- calibração probabilística;
-- diagnóstico por SKU;
+- P10/P50/P90 e calibração;
+- diagnóstico por SKU/horizonte;
 - Streamlit;
-- testes e GitHub Actions.
+- CI e artifacts auditáveis.
 
 ## Resultado agregado dos três folds
 
@@ -140,13 +176,11 @@ A extensão Python não substitui a execução exigida pela DIO. Ela demonstra u
 | RMSE médio | **31.917570** | 45.785757 |
 | WQL médio | **0.303370** | 0.647723 |
 
-O `WeightedEnsemble` foi selecionado internamente em 3/3 folds, mas venceu externamente somente 2/3. No primeiro fold, `Chronos2` apresentou WQL melhor. Portanto, o projeto não afirma superioridade universal do ensemble.
+O `WeightedEnsemble` foi selecionado internamente em 3/3 folds, mas venceu externamente 2/3. No fold 1, `Chronos2` teve WQL melhor. Portanto, o projeto não afirma superioridade universal do ensemble.
 
-Coverage observado do intervalo P10–P90: **67,24%**, abaixo dos ~80% nominais. Os quantis existem, mas não estão perfeitamente calibrados.
+Coverage P10–P90 observado: **67,24%**, abaixo de ~80% nominal. Os quantis são nativos, mas não estão perfeitamente calibrados.
 
-Resultados auditáveis: [`results/validated/`](results/validated/).
-
-Detalhes: [`docs/07-resultados-python.md`](docs/07-resultados-python.md).
+Resultados: [`results/validated/`](results/validated/) e [`docs/07-resultados-python.md`](docs/07-resultados-python.md).
 
 ---
 
@@ -158,25 +192,28 @@ pip install -r requirements-app.txt
 streamlit run app.py
 ```
 
-O Studio apresenta dataset, EDA, benchmarks, forecast, estabilidade temporal e calibração.
+O Studio apresenta dataset, EDA, benchmarks, estabilidade temporal, calibração e forecast da trilha Python.
 
 ---
 
 # 🔐 Segurança
 
-O caminho obrigatório da submissão DIO possui:
+A trilha necessária para preparar/enviar o desafio DIO possui:
 
 - secret-pattern scanning;
 - workflows com `contents: read`;
-- GitHub Actions oficiais pinadas por SHA;
-- `pip-audit` obrigatório sobre as dependências da aplicação **sem vulnerabilidades ignoradas**.
+- GitHub Actions oficiais pinadas por commit SHA;
+- `DIO submission dependencies` usando `pip-audit` **sem vulnerabilidades ignoradas** nas dependências obrigatórias da aplicação.
 
-A extensão AutoGluon possui uma dependência transitiva `lightning 2.6.5` afetada por `CVE-2026-58659 / PYSEC-2026-3624`. Em 30/08/2026 ainda não existe release PyPI corrigida. Por isso:
+A extensão AutoGluon possui dependência transitiva `lightning 2.6.5` afetada por `CVE-2026-58659 / PYSEC-2026-3624`. Em 30/08/2026 ainda não havia release PyPI corrigida compatível. Por isso:
 
-- AutoGluon é tratado como **extensão opcional de portfólio**, não requisito da submissão DIO;
-- o finding continua visível em um audit separado;
-- checkpoints externos/não confiáveis não são aceitos pelo projeto;
-- nenhuma exceção de CVE é usada no gate obrigatório da submissão DIO.
+- AutoGluon permanece extensão opcional;
+- o fluxo DIO/Canvas não depende de Lightning;
+- o audit opcional possui allowlist **somente** para `PYSEC-2026-3624`;
+- qualquer novo finding continua falhando o job;
+- nenhum checkpoint externo/não confiável é aceito pelo projeto.
+
+Isso é **isolamento e monitoramento de risco**, não alegação de correção upstream.
 
 Veja [`SECURITY.md`](SECURITY.md).
 
@@ -184,53 +221,64 @@ Veja [`SECURITY.md`](SECURITY.md).
 
 # 🧪 Qualidade e CI
 
-A trilha Python possui **23 testes** e validações para:
+A suíte atual possui **25 testes** após a inclusão do readiness checker. A cobertura inclui:
 
-- integridade/cardinalidade do dataset;
+- dataset/cardinalidade;
 - unicidade `SKU + data`;
 - splits temporais;
-- rolling-origin sem sobreposição externa;
-- métricas de forecasting;
-- métricas probabilísticas;
+- rolling-origin;
+- métricas de forecasting/probabilísticas;
 - benchmarks;
 - contratos AutoGluon;
 - UI;
-- secret scanner.
+- secret scanner;
+- readiness da submissão DIO.
+
+Workflows incluem:
+
+- Dataset validation;
+- Python forecasting;
+- AutoGluon experiment;
+- Streamlit smoke test;
+- Security scan;
+- DIO readiness.
 
 ---
 
 # ⚠️ Limitações
 
-- apenas 40 observações por SKU;
+- somente 40 observações por SKU;
 - dataset educacional;
 - forecast de estoque não equivale a forecast de demanda;
 - reposições/reset são intervenções operacionais;
 - `PRECO` e `FLAG_PROMOCAO` só são covariáveis futuras válidas se seus valores forem conhecidos no horizonte;
-- a extensão Python é demonstrador/portfólio, não sistema empresarial de reposição automática.
+- a extensão Python é demonstrador/portfólio, não sistema production-ready de reposição automática.
 
 ---
 
-# 💰 Custos AWS
+# 💰 FinOps e cleanup
 
-SageMaker Canvas pode gerar cobrança. Nenhum recurso potencialmente faturável deve ser iniciado sem revisão de custos e autorização explícita.
+Custos e estratégia de menor execução estão em:
 
-Plano FinOps e cleanup: [`docs/10-custos-aws.md`](docs/10-custos-aws.md) e [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md).
+- [`docs/10-custos-aws.md`](docs/10-custos-aws.md)
+- [`docs/12-cleanup-aws.md`](docs/12-cleanup-aws.md)
+
+A execução AWS permanece bloqueada até autorização explícita.
 
 ---
 
 # 📋 Antes de enviar para a DIO
 
-A submissão só deve ser feita depois de:
+- [ ] executar SageMaker Canvas;
+- [ ] adicionar os nove screenshots reais e sanitizados;
+- [ ] preencher `docs/15-resultados-canvas.md` com resultados reais;
+- [ ] documentar métricas/Column impact reais;
+- [ ] gerar forecast e export reais;
+- [ ] documentar decisão sobre re-treino;
+- [ ] escrever conclusões Canvas;
+- [ ] confirmar logout/cleanup e revisar billing;
+- [ ] reexecutar todos os checks;
+- [ ] executar `python scripts/check_dio_submission.py --strict`;
+- [ ] somente então mudar `DIO SUBMISSION READY: NO` para `YES` e enviar a URL na plataforma DIO.
 
-- [ ] executar o SageMaker Canvas;
-- [ ] adicionar screenshots reais;
-- [ ] registrar métricas reais do Canvas;
-- [ ] registrar feature importance real;
-- [ ] gerar/exportar forecast real;
-- [ ] escrever conclusões da execução;
-- [ ] confirmar que nenhum dado sensível aparece nas imagens;
-- [ ] fazer logout/cleanup da AWS;
-- [ ] verificar CI final;
-- [ ] atualizar este README de `pendente` para `executado` nas etapas realmente concluídas.
-
-**Estado atual: ainda não enviar à DIO porque a etapa real do SageMaker Canvas continua pendente.**
+**Estado atual: READY AFTER CANVAS — não enviar ainda porque a execução real e as evidências do SageMaker Canvas continuam pendentes.**
