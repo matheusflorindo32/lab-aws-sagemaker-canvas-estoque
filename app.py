@@ -45,7 +45,7 @@ tab_overview, tab_data, tab_bench, tab_auto, tab_forecast = st.tabs(
 with tab_overview:
     st.subheader("Arquitetura executada")
     st.markdown(
-        "Dataset → validação → holdout temporal → benchmarks → métricas → "
+        "Dataset → validação → validação temporal → benchmarks → métricas → "
         "AutoGluon opcional → leaderboard → forecast probabilístico → export"
     )
     st.info(
@@ -72,7 +72,8 @@ if "leaderboard" not in st.session_state:
 
 with tab_bench:
     st.subheader("Backtest temporal")
-    st.write(f"Os últimos **{horizon} dias por SKU** formam o holdout; nenhuma linha futura entra no treino.")
+    st.write(f"Os últimos **{horizon} dias por SKU** formam o holdout interativo; nenhuma linha futura entra no treino.")
+    st.caption("A validação oficial do repositório também executa 3 folds rolling-origin/expanding-window para avaliar estabilidade temporal.")
     if st.button("Executar benchmarks", type="primary"):
         leaderboard, predictions = run_benchmarks(rows, horizon=int(horizon))
         st.session_state.leaderboard = leaderboard
@@ -81,10 +82,10 @@ with tab_bench:
     if st.session_state.leaderboard:
         leaderboard_df = pd.DataFrame(st.session_state.leaderboard)
         display = leaderboard_df.copy()
-        for metric in ["MAE", "RMSE", "WAPE", "MAPE", "MASE", "WQL"]:
+        for metric in ["MAE", "RMSE", "WAPE", "MAPE", "MACRO_MASE", "WQL"]:
             display[metric] = display[metric].map(lambda value: f"{value:.6f}")
         st.dataframe(display, use_container_width=True, hide_index=True)
-        st.caption("Ranking primário por WAPE; RMSE é critério de desempate.")
+        st.caption("`MACRO_MASE` = MASE calculado por SKU e depois promediado. Ranking primário por WAPE; RMSE desempata.")
         st.download_button(
             "Baixar leaderboard CSV",
             leaderboard_df.to_csv(index=False).encode("utf-8"),
