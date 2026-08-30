@@ -51,6 +51,45 @@ def mase(
     return mae(actual, predicted) / scale
 
 
+def pinball_loss(actual: Sequence[float], predicted: Sequence[float], quantile: float) -> float:
+    _validate_lengths(actual, predicted)
+    if not 0 < quantile < 1:
+        raise ValueError("quantile deve estar entre 0 e 1")
+    losses = []
+    for a, p in zip(actual, predicted):
+        error = a - p
+        losses.append(max(quantile * error, (quantile - 1) * error))
+    return mean(losses)
+
+
+def interval_coverage(actual: Sequence[float], lower: Sequence[float], upper: Sequence[float]) -> float:
+    _validate_lengths(actual, lower)
+    _validate_lengths(actual, upper)
+    return mean(1.0 if lo <= a <= hi else 0.0 for a, lo, hi in zip(actual, lower, upper))
+
+
+def mean_interval_width(lower: Sequence[float], upper: Sequence[float]) -> float:
+    if not lower or len(lower) != len(upper):
+        raise ValueError("lower e upper devem ter o mesmo tamanho e não podem estar vazios")
+    return mean(hi - lo for lo, hi in zip(lower, upper))
+
+
+def quantile_crossing_count(forecasts: Mapping[float, Sequence[float]]) -> int:
+    if not forecasts:
+        raise ValueError("forecasts não pode estar vazio")
+    ordered = sorted(forecasts.items())
+    lengths = {len(values) for _, values in ordered}
+    if len(lengths) != 1 or next(iter(lengths)) == 0:
+        raise ValueError("todos os quantis devem ter o mesmo tamanho não vazio")
+    count = 0
+    n = next(iter(lengths))
+    for index in range(n):
+        values = [series[index] for _, series in ordered]
+        if any(values[i] > values[i + 1] for i in range(len(values) - 1)):
+            count += 1
+    return count
+
+
 def weighted_quantile_loss(
     actual: Sequence[float],
     forecasts: Mapping[float, Sequence[float]],
