@@ -1,12 +1,12 @@
 # ✨ Previsão de Estoque Inteligente — DIO + AWS SageMaker Canvas + Python
 
-> **Desafio oficial DIO evoluído para um projeto completo de forecasting, com duas trilhas complementares:** a execução visual no **Amazon SageMaker Canvas** e uma implementação própria, reproduzível e auditável em **Python + AutoGluon + Streamlit**.
+> **Desafio oficial DIO transformado em um case completo de forecasting com duas trilhas complementares:** a experiência no-code do **Amazon SageMaker Canvas** e uma implementação própria, interativa, reproduzível e auditável em **Python + AutoGluon + Streamlit**.
 
 [![DIO](https://img.shields.io/badge/DIO-Project%20Challenge-6C63FF)](https://www.dio.me/)
 [![AWS](https://img.shields.io/badge/AWS-SageMaker%20Canvas-FF9900?logo=amazonaws&logoColor=white)](https://aws.amazon.com/sagemaker/ai/canvas/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![AutoGluon](https://img.shields.io/badge/AutoGluon-TimeSeries-4B8BBE)](https://auto.gluon.ai/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Forecasting%20Studio-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20Studio-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 
 ---
 
@@ -16,15 +16,17 @@
 |---|---|---|
 | 🎯 Desafio DIO | **Preparado** | fluxo oficial reconstruído e documentado |
 | ☁️ SageMaker Canvas | **Execução real pendente** | import → build → métricas → forecast → export |
-| 🐍 Versão própria em Python | **Executada** | forecasting completo e reproduzível |
-| 📊 Validação temporal | **Executada** | 3 folds rolling-origin / expanding-window |
+| 🐍 Versão própria em Python | **Executada** | forecasting programático e reproduzível |
+| 📤 Teste por terceiros | **Implementado** | dataset demo ou upload de CSV próprio |
+| 🧪 Validação histórica | **Implementada** | holdout temporal com comparação previsão × valor real |
+| 🔮 Previsão futura | **Implementada** | usa todo o histórico e gera datas posteriores ao dataset |
+| 📊 Validação científica | **Executada** | 3 folds rolling-origin / expanding-window |
 | 🤖 AutoML | **Executado** | AutoGluon TimeSeries 1.6.1 |
 | 🎯 Forecast probabilístico | **Executado** | P10 / P50 / P90 + calibration |
-| 🖥️ Dashboard | **Executado** | Streamlit Inventory Forecasting Studio |
-| 🧪 Qualidade | **25 testes** | dataset, métricas, folds, segurança e readiness |
+| 🖥️ Dashboard | **Executado** | Inventory Forecasting Studio em Streamlit |
+| 🧪 Qualidade | **27 testes** | dados, forecasting, segurança e readiness |
 | 🔐 Segurança | **Hardened** | secret scan, pip-audit e Actions pinadas por SHA |
-| 📦 Evidências | **Estruturadas** | resultados, manifestos, checklist e matriz DIO |
-| 🚀 Submissão DIO | **READY AFTER CANVAS** | falta apenas a evidência real da execução AWS |
+| 🚀 Submissão DIO | **READY AFTER CANVAS** | falta a evidência real da execução AWS |
 
 ---
 
@@ -32,78 +34,215 @@
 
 Este projeto nasceu do desafio **“Previsão de Estoque Inteligente na AWS com SageMaker Canvas”** da Digital Innovation One.
 
-O fluxo esperado pela atividade é:
+O fluxo da atividade é:
 
 1. escolher um dataset;
 2. importar os dados no Amazon SageMaker Canvas;
 3. configurar o problema de previsão;
 4. treinar o modelo;
-5. analisar métricas e importância das características;
+5. analisar métricas e características relevantes;
 6. gerar previsões;
 7. exportar os resultados;
 8. registrar conclusões;
 9. enviar o link do repositório na DIO.
 
+A trilha Canvas foi preservada. A versão Python é uma **evolução adicional do projeto**, não uma substituição silenciosa da atividade original.
+
 ---
 
-# 🚀 Como o projeto foi evoluído
+# 🚀 Como o projeto original foi evoluído
 
-Em vez de apenas reproduzir o laboratório visual, o projeto foi **ampliado e profissionalizado**.
-
-A proposta passou a ter duas implementações do mesmo problema:
+O laboratório deixou de ser apenas uma execução visual e ganhou uma segunda implementação completa e aberta.
 
 ```text
-                  DATASET DE ESTOQUE
-                         │
-             ┌───────────┴───────────┐
-             │                       │
-             ▼                       ▼
-   ☁️ AWS SAGEMAKER CANVAS      🐍 PYTHON STACK
-       trilha oficial DIO       implementação própria
-             │                       │
-      Time Series Forecast       validação de dados
-             │                       │
-        model build             rolling-origin
-             │                       │
-       metrics / impact         baselines + AutoGluon
-             │                       │
-           forecast             P10 / P50 / P90
-             │                       │
-            export              Streamlit Studio
-             └───────────┬───────────┘
-                         ▼
-                ANÁLISE COMPARATIVA
+                         DATASET DE ESTOQUE
+                                │
+                    ┌───────────┴───────────┐
+                    │                       │
+                    ▼                       ▼
+          ☁️ AWS SAGEMAKER CANVAS      🐍 PYTHON STACK
+              trilha oficial DIO       implementação própria
+                    │                       │
+             Time Series Forecast       validação de dados
+                    │                       │
+               model build             backtesting temporal
+                    │                       │
+              metrics / impact         baselines + AutoGluon
+                    │                       │
+                  forecast             P10 / P50 / P90
+                    │                       │
+                   export              Streamlit Studio
+                    │                       │
+                    │              upload CSV + forecast futuro
+                    └───────────┬───────────┘
+                                ▼
+                       ANÁLISE COMPARATIVA
 ```
 
-### O que foi modificado em relação ao projeto original
-
-O desafio original foi preservado, mas recebeu uma camada adicional de engenharia e ciência de dados:
+### Modificações e extensões implementadas
 
 - validação automatizada do dataset;
 - checagem de cardinalidade e duplicatas `SKU + data`;
 - análise exploratória;
 - baselines `Naive`, `Drift` e `SeasonalNaive7`;
-- backtest temporal;
+- backtest/holdout temporal;
 - 3 folds rolling-origin / expanding-window;
 - AutoGluon TimeSeries;
 - MAE, RMSE, WAPE, MAPE, WQL e `MACRO_MASE`;
-- forecast probabilístico P10/P50/P90;
-- avaliação de coverage e calibração;
+- P10/P50/P90, coverage e calibração;
 - diagnóstico por SKU e horizonte;
-- Streamlit para exploração visual;
+- **upload de CSV pelo usuário**;
+- **modo Validação histórica**;
+- **modo Previsão futura**;
+- export de resultados em CSV;
+- dashboard Streamlit;
 - testes automatizados;
 - GitHub Actions;
 - dependency audit e secret scanning;
 - artifacts e manifestos reproduzíveis;
 - readiness checker específico para submissão DIO.
 
-A trilha Python **não substitui** o SageMaker Canvas. Ela demonstra como o mesmo problema pode ser implementado de forma programática, reproduzível e auditável.
+---
+
+# 🧠 Duas perguntas diferentes: testar e prever
+
+Uma das melhorias mais importantes desta versão é deixar explícita a diferença entre **backtesting** e **forecast futuro**.
+
+## 🧪 Modo 1 — Validação histórica
+
+As datas de teste pertencem ao próprio histórico.
+
+Exemplo conceitual:
+
+```text
+Histórico disponível: 01/01 → 08/02
+
+Treino:              01/01 → 01/02
+Dados escondidos:    02/02 → 08/02
+                         ↓
+                    modelo prevê
+                         ↓
+             previsão × valor real
+                         ↓
+                  MAE / RMSE / WAPE
+```
+
+Esse modo responde:
+
+> **“Se eu estivesse naquele ponto do passado, quanto o modelo teria acertado?”**
+
+Como os valores reais já existem, é possível medir o erro.
+
+## 🔮 Modo 2 — Previsão futura
+
+O segundo modo usa **todo o histórico** disponível e começa no dia seguinte à última observação de cada SKU.
+
+No dataset de demonstração, cuja última data é `2024-02-08`, um horizonte de 7 dias produz datas futuras a partir de:
+
+```text
+2024-02-09 → 2024-02-15
+```
+
+Essas datas não possuem `actual`, porque naquele momento estamos realmente extrapolando o histórico.
+
+Esse modo responde:
+
+> **“Dado tudo o que conheço até hoje, qual é a projeção para os próximos dias?”**
 
 ---
 
-# 📁 Dataset
+# 🖥️ Inventory Forecasting Studio — teste você mesmo
 
-Arquivo principal:
+O Studio foi preparado para que outra pessoa consiga experimentar o projeto sem alterar código.
+
+### Opção A — dataset de demonstração
+
+Selecione:
+
+`Dataset de demonstração`
+
+### Opção B — seu próprio CSV
+
+Selecione:
+
+`Enviar meu CSV`
+
+O arquivo deve conter:
+
+```text
+ID_PRODUTO,DATA_EVENTO,PRECO,FLAG_PROMOCAO,QUANTIDADE_ESTOQUE
+```
+
+Formato esperado de data:
+
+```text
+YYYY-MM-DD
+```
+
+Depois escolha uma das experiências:
+
+### 🧪 Validação histórica
+
+- define o horizonte;
+- esconde as últimas observações;
+- calcula previsões;
+- compara com os valores reais;
+- apresenta métricas;
+- permite download do backtest.
+
+### 🔮 Previsão futura
+
+- usa todo o histórico;
+- escolhe `Naive`, `SeasonalNaive7` ou `Drift`;
+- cria datas futuras automaticamente;
+- gera `point`, `P10`, `P50` e `P90`;
+- permite visualizar por SKU;
+- permite baixar `future_inventory_forecast.csv`.
+
+> O modo futuro leve usa os baselines do projeto para manter o aplicativo público rápido e barato. O AutoGluon permanece como experimento avançado reproduzível por script e com resultados validados versionados.
+
+---
+
+# ▶️ Executar localmente
+
+```bash
+# clone o repositório
+git clone https://github.com/matheusflorindo32/lab-aws-sagemaker-canvas-estoque.git
+cd lab-aws-sagemaker-canvas-estoque
+
+# use a branch do projeto enquanto o PR estiver aberto
+git checkout feat/professional-ml-portfolio
+
+# ambiente
+python -m venv .venv
+pip install -r requirements-app.txt
+
+# aplicação
+streamlit run app.py
+```
+
+O navegador abrirá o **Inventory Forecasting Studio**.
+
+---
+
+# 🌐 Deploy público
+
+A aplicação está preparada para **Streamlit Community Cloud**, que é a opção natural para esta versão porque o frontend e o motor leve estão na mesma aplicação Python.
+
+Configuração de deploy:
+
+```text
+Repository: matheusflorindo32/lab-aws-sagemaker-canvas-estoque
+Branch: feat/professional-ml-portfolio
+Main file: app.py
+Requirements: requirements-app.txt
+```
+
+> O link público será adicionado aqui após o primeiro deploy. Não é necessário migrar para Vercel para demonstrar esta versão. Uma futura V2 SaaS pode separar frontend web e API Python.
+
+---
+
+# 📁 Dataset de demonstração
 
 ```text
 datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
@@ -136,7 +275,7 @@ datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv
 
 # ☁️ Trilha oficial — Amazon SageMaker Canvas
 
-Configuração preparada para a execução real:
+Configuração preparada:
 
 | Parâmetro | Valor planejado |
 |---|---|
@@ -148,16 +287,14 @@ Configuração preparada para a execução real:
 | Frequência | diária |
 | Colunas adicionais | `PRECO`, `FLAG_PROMOCAO` quando suportadas pelo fluxo real |
 
-### Status
+**Status: execução real do Canvas ainda pendente.**
 
-**SageMaker Canvas ainda não foi executado neste repositório.**
+Nenhum resultado Python é apresentado como resultado AWS.
 
-Isso é intencionalmente declarado para manter a rastreabilidade: nenhum resultado Python é apresentado como resultado AWS.
+Após a execução serão adicionadas evidências reais de:
 
-Após a execução real serão adicionadas as evidências de:
-
-- import do dataset;
-- configuração do modelo;
+- import;
+- configuração;
 - treinamento;
 - métricas;
 - Column impact / feature importance;
@@ -167,17 +304,13 @@ Após a execução real serão adicionadas as evidências de:
 
 ### AWS Free Tier
 
-O SageMaker possui **Free Tier para contas elegíveis**. Atualmente, o SageMaker Canvas inclui até **160 horas/mês de sessão durante os primeiros 2 meses** do Free Tier.
+O SageMaker Canvas possui Free Tier para contas elegíveis. A elegibilidade e eventuais cobranças de build/prediction devem ser verificadas na própria conta antes da execução.
 
-> O Free Tier de sessão **não significa que todo treinamento ou previsão seja necessariamente gratuito**. Construção de modelos e predictions podem consumir recursos faturáveis; por isso a recomendação é verificar a elegibilidade da conta e encerrar a sessão após o laboratório.
-
-Detalhes operacionais ficam fora do fluxo principal deste README e estão em `docs/10-custos-aws.md` e `docs/12-cleanup-aws.md`.
+Detalhes operacionais: `docs/10-custos-aws.md` e `docs/12-cleanup-aws.md`.
 
 ---
 
-# 🐍 Trilha avançada — implementação própria em Python
-
-A segunda versão implementa o mesmo problema de forecasting fora do Canvas.
+# 🐍 Trilha avançada — Python + AutoGluon
 
 ## Stack
 
@@ -185,8 +318,10 @@ A segunda versão implementa o mesmo problema de forecasting fora do Canvas.
 Python 3.12
 │
 ├── validação de dados
-├── benchmarks de forecasting
-├── rolling-origin backtesting
+├── upload de CSV
+├── historical backtesting
+├── future forecasting
+├── rolling-origin
 ├── AutoGluon TimeSeries 1.6.1
 ├── probabilistic forecasting
 ├── métricas + calibration
@@ -194,26 +329,13 @@ Python 3.12
 └── GitHub Actions
 ```
 
-### Por que criar essa segunda versão?
-
 O Canvas mostra **como resolver o problema usando AutoML no-code**.
 
-A versão Python mostra:
-
-- como a validação é construída;
-- como o split temporal funciona;
-- como comparar modelos;
-- como avaliar incerteza;
-- como preservar resultados;
-- como testar e automatizar a solução.
-
-Isso transforma o laboratório em um case de portfólio com maior profundidade técnica.
+A versão Python expõe a mecânica da solução, permite testes por terceiros e adiciona reprodutibilidade.
 
 ---
 
-# 📊 Protocolo experimental
-
-## Rolling-origin / expanding-window
+# 📊 Protocolo científico
 
 Foram utilizados 3 testes temporais externos não sobrepostos:
 
@@ -225,9 +347,7 @@ Foram utilizados 3 testes temporais externos não sobrepostos:
 
 O período externo não é usado para selecionar o modelo.
 
----
-
-# 🥇 Baselines
+## Baselines
 
 | Modelo | WAPE médio | RMSE médio | MACRO_MASE | WQL médio |
 |---|---:|---:|---:|---:|
@@ -235,13 +355,9 @@ O período externo não é usado para selecionar o modelo.
 | Drift | 0.809554 | 52.004579 | 2.853404 | 0.690580 |
 | SeasonalNaive7 | 0.874120 | 49.939643 | 3.010651 | 0.818905 |
 
-O Naive foi o baseline mais forte nas três janelas.
-
 ---
 
 # 🤖 AutoGluon TimeSeries
-
-Configuração executada:
 
 ```text
 AutoGluon TimeSeries = 1.6.1
@@ -254,28 +370,21 @@ random_seed = 123
 presets = medium_quality
 ```
 
-## Resultado dos três folds
-
-| Fold | Modelo selecionado | Vencedor externo | Rank do WeightedEnsemble | WAPE | WQL |
+| Fold | Modelo selecionado | Vencedor externo | Rank WeightedEnsemble | WAPE | WQL |
 |---:|---|---|---:|---:|---:|
 | 1 | WeightedEnsemble | **Chronos2** | 3º | 0.700500 | 0.424289 |
 | 2 | WeightedEnsemble | **WeightedEnsemble** | 1º | 0.441683 | 0.262329 |
 | 3 | WeightedEnsemble | **WeightedEnsemble** | 1º | 0.358348 | 0.223493 |
 
-### Leitura correta
-
-- seleção interna do ensemble: **3/3 folds**;
+- seleção interna: **3/3 folds**;
 - vitória externa: **2/3 folds**;
-- estabilidade de seleção: **stable**;
 - estabilidade externa: **unstable**.
 
-O projeto não força a narrativa de que um único modelo é sempre superior.
+O projeto preserva o resultado negativo do fold 1 em vez de vender o melhor holdout como regra geral.
 
 ---
 
-# 📈 Ganho sobre o melhor baseline
-
-Comparação média AutoGluon × Naive:
+# 📈 AutoGluon × melhor baseline
 
 | Métrica | Naive | AutoGluon | Melhoria relativa |
 |---|---:|---:|---:|
@@ -283,13 +392,11 @@ Comparação média AutoGluon × Naive:
 | RMSE | 45.785757 | **31.917570** | **30,29%** |
 | WQL | 0.647723 | **0.303370** | **53,16%** |
 
-Esses resultados pertencem ao dataset educacional deste projeto e não representam garantia de desempenho em produção.
+Resultados pertencem ao dataset educacional e não são garantia de desempenho em produção.
 
 ---
 
 # 🎯 Forecast probabilístico
-
-Além de previsão pontual, o projeto avalia P10/P50/P90.
 
 | Indicador | Resultado |
 |---|---:|
@@ -300,39 +407,17 @@ Além de previsão pontual, o projeto avalia P10/P50/P90.
 | Coverage nominal | ~80% |
 | Quantile crossing | **0** |
 
-Conclusão: os intervalos representam incerteza, mas apresentam **subcoverage** neste histórico curto.
+Os intervalos apresentam subcoverage neste histórico curto.
 
 ---
 
-# 🖥️ Inventory Forecasting Studio
+# 🧪 Engenharia, testes e CI
 
-O projeto inclui um dashboard Streamlit para explorar:
+A suíte agora possui **27 testes automatizados**, incluindo contratos para:
 
-- dataset e EDA;
-- benchmarks;
-- leaderboard AutoGluon;
-- estabilidade dos modelos;
-- calibration;
-- forecast por SKU;
-- P10/P50/P90;
-- resultados validados.
-
-Executar:
-
-```bash
-python -m venv .venv
-pip install -r requirements-app.txt
-streamlit run app.py
-```
-
----
-
-# 🧪 Engenharia e qualidade
-
-## 25 testes automatizados
-
-Cobrem:
-
+- parsing de CSV enviado pelo usuário;
+- geração de datas futuras;
+- ausência de `actual` em forecasts futuros;
 - dataset/cardinalidade;
 - duplicatas SKU+data;
 - splits temporais;
@@ -343,8 +428,6 @@ Cobrem:
 - UI;
 - secret scanning;
 - DIO submission readiness.
-
-## CI
 
 Workflows incluem:
 
@@ -367,55 +450,41 @@ A trilha principal possui:
 - `contents: read` nos workflows;
 - separação entre dependências obrigatórias e stack ML opcional.
 
-A extensão AutoGluon possui hoje um risco transitivo conhecido em `lightning 2.6.5` (`CVE-2026-58659 / PYSEC-2026-3624`). A trilha Canvas/DIO não depende dessa biblioteca.
+A extensão AutoGluon possui risco transitivo conhecido em `lightning 2.6.5` (`CVE-2026-58659 / PYSEC-2026-3624`). A trilha Canvas/DIO e o app Streamlit leve não dependem dessa biblioteca.
 
-Veja `SECURITY.md` para detalhes.
+Veja `SECURITY.md`.
 
 ---
 
 # 📦 Reprodutibilidade
 
-Resultados pequenos e auditáveis estão preservados em:
+Resultados auditáveis estão em:
 
 ```text
 results/validated/
 ```
 
-Incluindo:
-
-- métricas multifold;
-- summary agregado;
-- estabilidade dos modelos;
-- calibração por horizonte;
-- análise por SKU;
-- manifesto com hash do dataset;
-- proveniência dos artifacts.
+Incluindo métricas multifold, estabilidade, calibração, análise por SKU e manifesto com hash do dataset.
 
 ---
 
 # 🔎 DIO Submission Readiness
 
-Existe um checker automático:
-
 ```bash
 python scripts/check_dio_submission.py
 ```
 
-Hoje ele deve retornar:
+Hoje:
 
 ```text
 DIO SUBMISSION READY: NO
 ```
 
-porque a evidência real do Canvas ainda não foi gerada.
-
-Após completar o fluxo AWS:
+Após executar o Canvas e adicionar evidências reais:
 
 ```bash
 python scripts/check_dio_submission.py --strict
 ```
-
-O projeto só será marcado como pronto quando todas as evidências obrigatórias existirem.
 
 ---
 
@@ -435,18 +504,19 @@ O projeto só será marcado como pronto quando todas as evidências obrigatória
 
 # ⚠️ Limitações
 
-- 40 observações por SKU;
+- 40 observações por SKU no dataset demo;
 - dataset educacional;
 - forecast de estoque não equivale a forecast de demanda;
 - reposições podem alterar a dinâmica observada;
 - covariáveis futuras só são válidas quando realmente conhecidas;
-- a solução Python é um demonstrador avançado, não um sistema corporativo completo de reposição.
+- P10/P50/P90 dos baselines futuros são cenários empíricos, não intervalos perfeitamente calibrados;
+- a solução é um demonstrador técnico avançado, não um sistema corporativo completo de reposição.
 
 ---
 
 # 🧭 Próxima evolução
 
-Após fechar a trilha DIO, uma versão de produto real deveria evoluir de previsão de estoque para decisão operacional:
+Após fechar a trilha DIO, uma versão de produto real deve evoluir de previsão para decisão operacional:
 
 ```text
 DEMANDA / VENDAS
@@ -469,10 +539,13 @@ QUANTIDADE RECOMENDADA
 | Trilha | Estado |
 |---|---|
 | Projeto original DIO | **Preservado e expandido** |
+| Upload de CSV | **Implementado** |
+| Validação histórica | **Implementada** |
+| Previsão futura | **Implementada** |
 | Versão Python | **Executada e reproduzível** |
 | CI / testes / segurança | **Implementados** |
-| Documentação | **Estruturada** |
+| Deploy público | **Preparado para Streamlit Community Cloud** |
 | SageMaker Canvas real | **Pendente** |
 | Submissão DIO | **READY AFTER CANVAS** |
 
-> **O projeto foi intencionalmente expandido além do laboratório original: a trilha Canvas mantém a aderência à DIO, enquanto a versão Python demonstra o mesmo problema com maior transparência metodológica, automação e reprodutibilidade.**
+> **O projeto foi intencionalmente expandido além do laboratório original: a trilha Canvas mantém a aderência à DIO, enquanto a implementação Python permite que qualquer pessoa valide o histórico, envie seu próprio CSV e gere previsões futuras diretamente pelo Studio.**
