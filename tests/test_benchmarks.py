@@ -2,7 +2,7 @@ import unittest
 from datetime import date
 
 from src.inventory_forecasting.baselines import drift_forecast, naive_forecast, seasonal_naive_forecast
-from src.inventory_forecasting.benchmark import run_benchmarks_multifold
+from src.inventory_forecasting.benchmark import run_benchmarks_multifold, run_future_forecast
 
 
 class BaselineTests(unittest.TestCase):
@@ -39,6 +39,29 @@ class BaselineTests(unittest.TestCase):
         self.assertTrue(all("fold" in row for row in fold_metrics))
         self.assertTrue(all("MACRO_MASE" in row for row in fold_metrics))
         self.assertTrue(all("WAPE_mean" in row and "WAPE_median" in row and "WAPE_stdev" in row for row in summary))
+
+    def test_future_forecast_starts_after_last_observation_and_has_no_actuals(self) -> None:
+        rows = []
+        start = date(2024, 1, 1)
+        for sku in ("A", "B"):
+            for step in range(10):
+                rows.append(
+                    {
+                        "ID_PRODUTO": sku,
+                        "DATA_EVENTO": date.fromordinal(start.toordinal() + step),
+                        "PRECO": 10.0,
+                        "FLAG_PROMOCAO": False,
+                        "QUANTIDADE_ESTOQUE": float(100 - step),
+                    }
+                )
+
+        predictions = run_future_forecast(rows, horizon=3, model_name="Naive")
+
+        self.assertEqual(len(predictions), 2 * 3)
+        self.assertEqual(predictions[0]["DATA_EVENTO"], "2024-01-11")
+        self.assertEqual(predictions[-1]["DATA_EVENTO"], "2024-01-13")
+        self.assertTrue(all("actual" not in row for row in predictions))
+        self.assertTrue(all(row["P10"] <= row["P50"] <= row["P90"] for row in predictions))
 
 
 if __name__ == "__main__":
