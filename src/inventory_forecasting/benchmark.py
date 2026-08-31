@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import timedelta
 from statistics import mean, median, stdev
 from typing import Callable
 
@@ -153,6 +154,49 @@ def _evaluate_split(
 def run_benchmarks(rows: list[dict], horizon: int = 7) -> tuple[list[dict], list[dict]]:
     train, holdout = temporal_holdout(rows, horizon=horizon)
     return _evaluate_split(train, holdout, horizon=horizon)
+
+
+def run_future_forecast(rows: list[dict], horizon: int = 7, model_name: str = "Naive") -> list[dict]:
+    if horizon < 1:
+        raise ValueError("Horizonte deve ser positivo")
+    if model_name not in MODELS:
+        raise ValueError(f"Modelo desconhecido: {model_name}")
+
+    by_sku: dict[str, list[dict]] = defaultdict(list)
+    for row in rows:
+        by_sku[str(row["ID_PRODUTO"])].append(row)
+
+    predictions: list[dict] = []
+    model_fn = MODELS[model_name]
+    for sku in sorted(by_sku):
+        sku_rows = sorted(by_sku[sku], key=lambda r: r["DATA_EVENTO"])
+        history = [float(row["QUANTIDADE_ESTOQUE"]) for row in sku_rows]
+        if len(history) < 2:
+            raise ValueError(f"SKU {sku} precisa de pelo menos 2 observações para previsão futura")
+        if model_name == "SeasonalNaive7" and len(history) < 7:
+            raise ValueError(f"SKU {sku} precisa de pelo menos 7 observações para SeasonalNaive7")
+
+        point = model_fn(history, horizon)
+        innovations = _innovation_quantiles(history)
+        quantiles = {
+            q: [max(0.0, p + innovations[q]) for p in point]
+            for q in (0.1, 0.5, 0.9)
+        }
+        last_date = sku_rows[-1]["DATA_EVENTO"]
+
+        for step in range(horizon):
+            predictions.append(
+                {
+                    "model": model_name,
+                    "ID_PRODUTO": sku,
+                    "DATA_EVENTO": (last_date + timedelta(days=step + 1)).isoformat(),
+                    "point": point[step],
+                    "P10": quantiles[0.1][step],
+                    "P50": quantiles[0.5][step],
+                    "P90": quantiles[0.9][step],
+                }
+            )
+    return predictions
 
 
 def run_benchmarks_multifold(
