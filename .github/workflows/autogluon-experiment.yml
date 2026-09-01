@@ -1,0 +1,66 @@
+name: AutoGluon experiment
+
+on:
+  push:
+    branches: [feat/professional-ml-portfolio]
+    paths:
+      - '.github/workflows/autogluon-experiment.yml'
+      - 'requirements-ml.txt'
+      - 'scripts/train_autogluon.py'
+      - 'scripts/train_autogluon_multifold.py'
+      - 'src/inventory_forecasting/autogluon_runner.py'
+      - 'src/inventory_forecasting/metrics.py'
+      - 'datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  autogluon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node 24
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ml.txt
+
+      - name: Run final holdout
+        run: python scripts/train_autogluon.py --time-limit 180 --presets medium_quality
+
+      - name: Run rolling-origin experiment
+        run: python scripts/train_autogluon_multifold.py --time-limit 180 --presets medium_quality
+
+      - name: Verify outputs
+        run: |
+          test -s results/autogluon/leaderboard.csv
+          test -s results/autogluon/holdout_predictions.csv
+          test -s results/autogluon/metrics_summary.csv
+          test -s results/autogluon/calibration_by_sku.csv
+          test -s results/autogluon/experiment_manifest.json
+          test -s results/autogluon/multifold_leaderboard.csv
+          test -s results/autogluon/multifold_metrics.csv
+          test -s results/autogluon/multifold_predictions.csv
+          test -s results/autogluon/multifold_calibration_by_sku.csv
+          test -s results/autogluon/multifold_summary.csv
+          test -s results/autogluon/multifold_manifest.json
+          test -s results/autogluon/model_stability.csv
+          test -s results/autogluon/sku_metrics.csv
+          test -s results/autogluon/horizon_calibration.csv
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, Node 24
+        with:
+          name: inventory-forecasting-autogluon
+          path: results/autogluon/
+          if-no-files-found: error
+          retention-days: 30

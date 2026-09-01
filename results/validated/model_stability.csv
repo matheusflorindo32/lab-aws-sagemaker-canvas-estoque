@@ -1,0 +1,4 @@
+fold,selected_by_validation,test_winner,weighted_ensemble_test_rank,weighted_ensemble_score_test,winner_score_test,weighted_ensemble_relative_wql_gap_to_winner
+1,WeightedEnsemble,Chronos2,3,-0.424288751845689,-0.3336676064740352,0.2715910793057629
+2,WeightedEnsemble,WeightedEnsemble,1,-0.26232861986815437,-0.26232861986815437,0.0
+3,WeightedEnsemble,WeightedEnsemble,1,-0.22349288237753495,-0.22349288237753495,0.0

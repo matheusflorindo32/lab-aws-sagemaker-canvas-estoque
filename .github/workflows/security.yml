@@ -1,0 +1,66 @@
+name: Security scan
+
+on:
+  push:
+    branches: [main, feat/professional-ml-portfolio]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node 24
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.12'
+
+      - name: Scan repository for high-risk secret patterns
+        run: python scripts/scan_secrets.py
+
+  dio-submission-dependencies:
+    name: DIO submission dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node 24
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.12'
+
+      - name: Install pip-audit
+        run: python -m pip install pip-audit==2.10.1
+
+      - name: Audit required application dependencies with no ignored vulnerabilities
+        run: python -m pip_audit -r requirements-app.txt
+
+  optional-ml-advisory:
+    name: Optional AutoGluon dependency advisory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5, Node 24
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, Node 24
+        with:
+          python-version: '3.12'
+
+      - name: Install pip-audit
+        run: python -m pip install pip-audit==2.10.1
+
+      - name: Audit optional ML stack with exact temporary allowlist
+        # CVE-2026-58659 / PYSEC-2026-3624 is transitively introduced by the
+        # optional AutoGluon stack. No patched PyPI Lightning release exists as
+        # of 2026-08-30. This exact allowlist must be removed when a compatible
+        # fixed release is published. Any other vulnerability still fails CI.
+        run: python -m pip_audit -r requirements-ml.txt --ignore-vuln PYSEC-2026-3624

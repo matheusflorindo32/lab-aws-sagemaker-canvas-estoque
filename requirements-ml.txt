@@ -1,0 +1,5 @@
+# OPTIONAL PORTFOLIO EXTENSION — not required for the DIO SageMaker Canvas submission.
+# This stack currently resolves Lightning 2.6.5, affected by CVE-2026-58659 / PYSEC-2026-3624.
+# Do not use it to load untrusted checkpoints. See SECURITY.md.
+autogluon.timeseries>=1.6,<1.7
+pandas>=2.2,<3

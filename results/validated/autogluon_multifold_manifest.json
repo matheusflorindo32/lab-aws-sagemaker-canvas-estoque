@@ -1,0 +1,19 @@
+{
+  "protocol": "external rolling-origin expanding-window",
+  "folds": 3,
+  "horizon": 7,
+  "train_points_per_sku": [19, 26, 33],
+  "test_windows_non_overlapping": true,
+  "dataset": "datasets/dataset-1000-com-preco-promocional-e-renovacao-estoque.csv",
+  "dataset_sha256": "fe8ffe48cc34cd8540ecba10984066fe503b0bb5ca9d55f9280d5b1960649031",
+  "model_selection": "AutoGluon validation only; external test holdout not used to choose model",
+  "presets": "medium_quality",
+  "time_limit_seconds_per_fold": 180,
+  "selected_models": ["WeightedEnsemble", "WeightedEnsemble", "WeightedEnsemble"],
+  "selection_stability": "stable",
+  "external_test_stability": "unstable",
+  "weighted_ensemble_external_win_rate": 0.6666666666666666,
+  "source_workflow_run": 33339001646,
+  "source_artifact_id": 9739968837,
+  "source_artifact_digest": "sha256:32ac52fe9d069861563720073fde4b3c3c615bade20dd8f9cd30b453b9356a5f"
+}
